@@ -7,6 +7,16 @@ import reportWebVitals from './reportWebVitals';
 import "leaflet/dist/leaflet.css";
 import "../node_modules/leaflet/dist/leaflet.css";
 import "../node_modules/leaflet-draw/dist/leaflet.draw.css";
+import icon from "leaflet/dist/images/marker-icon.png";
+import L from "leaflet";
+import iconShadow from "leaflet/dist/images/marker-shadow.png";
+
+let DefaultIcon = L.icon({
+  iconUrl: icon,
+  shadowUrl: iconShadow,
+});
+
+L.Marker.prototype.options.icon = DefaultIcon;
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(

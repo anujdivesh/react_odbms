@@ -5,13 +5,13 @@ import axios from "axios";
 import * as ReactBootStrap from 'react-bootstrap';
 import paginationFactory, { PaginationProvider, PaginationTotalStandalone, PaginationListStandalone } from 'react-bootstrap-table2-paginator';
 import Multiselect from 'multiselect-react-dropdown';
-import { MapContainer, TileLayer,FeatureGroup } from 'react-leaflet';
+import { MapContainer, TileLayer,FeatureGroup, Marker, Popup, Rectangle } from 'react-leaflet';
 import { EditControl } from "react-leaflet-draw";
 import {Button,Modal} from "react-bootstrap";
 import JSONPretty from 'react-json-pretty';
-import addimage from '../flags/FJ.jpg';
 import { MdOutlinePageview } from "react-icons/md";
 import { FaEdit } from "react-icons/fa";
+
 
 const Home = () => {
   var JSONPrettyMon = require('react-json-pretty/dist/monikai');
@@ -21,6 +21,13 @@ const Home = () => {
   const handleinfo = () => {
     setinfoshow(false)
   };
+
+  const [infoshow2, setinfoshow2] = useState(false);
+  const [infotext2, setinfotext2] = useState(false);
+  const handleinfo2 = () => {
+    setinfoshow2(false)
+  };
+
 
 
   //Leaflet
@@ -60,8 +67,15 @@ const Home = () => {
   const countryref = useRef('%');
   const datatyperef = useRef('%');
   const projectref = useRef('%');
+  const isMarkerRef = useRef();
+  const positionRef = useRef([0.878032, 185.843298]);
+  const zoomRef = useRef(3);
+  const markerRef = useRef([51.505, -0.09])
+  const bboxRef = useRef([[-20.3034175184893,181.97255105015114],[-15.241789855961722,175.9708637472084]]);
+  const countryFlagRef = useRef(require('../flags/FJI.png'))
   const [players, setPlayers] =useState([]);
   const [loading, setLoading] =useState(true);
+  const [loading2, setLoading2] =useState(true);
   const [obsSource, setobsSource] =useState([]);
   const [parameter, setParameter]  = useState('');
   const [parameterlist,setParameterlist] = useState([]);
@@ -277,13 +291,93 @@ const Home = () => {
       {dataField: "version", text:"Version",style:{fontSize:'13px', padding:'1px'},headerStyle: { backgroundColor: '#215E95', color: 'white'}},
       {dataField: "edit", text:"Action",formatter: rankFormatter,style:{fontSize:'13px', padding:'1px'},headerStyle: { backgroundColor: '#215E95', color: 'white'}}
   ]
+
+  const loopToGetCoord = (extents,pos) =>{
+    for (var i =0; i<extents.length; i++){
+      if(extents[i].extent_name === pos){
+        return extents[i].value;
+      }
+    }
+  }
+
   const getOneData = async (row) => {
+    setLoading(false)
     const data2 = await axios.get("https://opmdata.gem.spc.int/api/metadata/id/"+row.idx);
-    var sets = JSON.stringify(data2.data[0]);
-    //console.log(sets)
+    
+    countryFlagRef.current =  require('../flags/'+data2.data[0].countries[0].country_code+'.png')
+
+    var extents = data2.data[0].spatial_extents;
+    
+    for (var i =0; i<extents.length; i++){
+      if(extents[i].extent_name === 'x'){
+        isMarkerRef.current = true;
+        break;
+      }
+      else{
+        isMarkerRef.current = false
+      }
+    }
+    var coord_marker = [];
+    var coordbbox = [];
+    if (isMarkerRef.current){
+      coord_marker.push(loopToGetCoord(extents,"y"))
+      coord_marker.push(loopToGetCoord(extents,"x"))
+      markerRef.current = coord_marker;
+      positionRef.current = coord_marker;
+      zoomRef.current = 10;
+    }
+    else{
+      var tmp = []
+      tmp.push(loopToGetCoord(extents,"ymin"))
+      tmp.push(loopToGetCoord(extents,"xmin"))
+      coordbbox.push(tmp)
+      tmp = [];
+      tmp.push(loopToGetCoord(extents,"ymax"))
+      tmp.push(loopToGetCoord(extents,"xmax"))
+      coordbbox.push(tmp)
+      console.log(coordbbox)
+      bboxRef.current = coordbbox;
+      positionRef.current = tmp;
+      zoomRef.current = 4;
+    }
     const jsonData = JSON.stringify(data2.data[0], null, 2);
     setinfotext(jsonData)
+    setLoading(true)
     setinfoshow(true)
+  }
+
+  const editData = async (row) => {
+    setLoading(false)
+    const data2 = await axios.get("https://opmdata.gem.spc.int/api/metadata/id/"+row.idx);
+    
+    const jsonData = JSON.stringify(data2.data[0], null, 2);
+    var metadata = {};
+    /*
+    var employees = []
+    metadata.employees = employees;
+
+    var firstName = "John";
+    var lastName = "Smith";
+    var employee = {
+      "firstName": firstName,
+      "lastName": lastName
+    }
+    metadata.employees.push(employee);*/
+    metadata.title = data2.data[0].title;
+    metadata.description = data2.data[0].description;
+    metadata.temporal_coverage_from = data2.data[0].temporal_coverage_from;
+    metadata.temporal_coverage_to = data2.data[0].temporal_coverage_to;
+    metadata.language = data2.data[0].language;
+    metadata.version = data2.data[0].version;
+    metadata.data_type = data2.data[0].data_type.id;
+    metadata.spatial_projection_id = data2.data[0].spatial_projection.id;
+    metadata.license_id = data2.data[0].license.id;
+    console.log(metadata)
+
+    var dataaa = JSON.stringify(metadata,null,2)
+    setinfotext2(dataaa)
+    setLoading(true)
+    setinfoshow2(true)
   }
   function rankFormatter(cell, row, rowIndex, formatExtraData) { 
       //console.log(cell)
@@ -293,7 +387,7 @@ const Home = () => {
                    cursor: "pointer",
                   lineHeight: "normal" }}>
                       
-              <MdOutlinePageview  style={{width:"23px",height:"23px"}} onClick={() => {getOneData(row)}}/> &nbsp;<FaEdit style={{width:"18px",height:"18px",paddingBottom:'2px'}}/>
+              <MdOutlinePageview  style={{width:"23px",height:"23px"}} onClick={() => {getOneData(row)}}/> &nbsp;<FaEdit style={{width:"18px",height:"18px",paddingBottom:'2px' }} onClick={() => {editData(row)}}/>
        </div> 
   ); } 
 
@@ -595,6 +689,7 @@ mapContainer.current.on(L.Draw.Event.CREATED, function(e) {
     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     url="https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"
   />
+
    <FeatureGroup>
     <EditControl
       position='topleft'
@@ -664,14 +759,24 @@ mapContainer.current.on(L.Draw.Event.CREATED, function(e) {
         <Modal.Body>
           <div>
             <div style={{height:'200px', width:'100%'}}>
-        <MapContainer center={[0.878032, 185.843298]} zoom={3} scrollWheelZoom={true}>
+        <MapContainer center={positionRef.current} zoom={zoomRef.current} scrollWheelZoom={true}>
           
   <TileLayer
     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     url="https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"
   />
+  {isMarkerRef.current ?
+  <Marker position={markerRef.current}></Marker>
+  :null}
 
-<img className="edit-location-button" src={addimage} style={{width:"100px", height:"60px"}} />
+  {isMarkerRef.current ? null:
+   <Rectangle
+   bounds={bboxRef.current}
+   color="#FF5733"
+ />
+ }
+
+<img className="edit-location-button" src={countryFlagRef.current} style={{width:"100px", height:"60px"}} />
 </MapContainer>
 
 </div>
@@ -681,6 +786,30 @@ mapContainer.current.on(L.Draw.Event.CREATED, function(e) {
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={handleinfo}>
+            Close
+          </Button>
+         
+        </Modal.Footer>
+      </Modal>
+
+      <Modal show={infoshow2} onHide={handleinfo2} size="lg">
+    <Modal.Header>
+      Information
+      </Modal.Header>
+      
+        <Modal.Body>
+          <div>
+          <textarea class="form-control full-width" rows="20" placeholder="Metadata details" width="100%">
+          {infotext2}
+          </textarea>
+
+         </div>
+        </Modal.Body>
+        <Modal.Footer>
+        <Button variant="warning" onClick={handleinfo2}>
+            Update
+          </Button>
+          <Button variant="secondary" onClick={handleinfo2}>
             Close
           </Button>
          

@@ -14,8 +14,10 @@ function TableRows({rowsData, deleteTableRows, handleChange}) {
         >
            <option value="select">-- Select --</option>
            <option value="shared-drive">Shared Drive</option>
-           <option value="thredds">Thredds</option>
-           <option value="geoserver">Geoserver</option>
+           <option value="thredds-url">Thredds</option>
+           <option value="geoserver-url">Geoserver</option>
+           <option value="api">API</option>
+           <option value="other">other</option>
         </select>
                 </td>
                 <td><input type="text" placeholder="Enter full path" value={emailAddress}  onChange={(evnt)=>(handleChange(index, evnt))} name="emailAddress" className="form-control form-select-sm"/> </td>

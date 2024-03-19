@@ -6,7 +6,7 @@ import Multiselect from 'multiselect-react-dropdown';
 import '../css/date.css';
 import TableRows from "./TableRows"
 import addimage from '../assets/add.png';
-
+import {Button,Modal} from "react-bootstrap";
 const Add = () => {
     const [rowsData, setRowsData] = useState([]);
     const addTableRows = ()=>{
@@ -36,10 +36,16 @@ const Add = () => {
   
   
   }
+  const [infoshow2, setinfoshow2] = useState(false);
+  const handleinfo2 = () => {
+    setinfoshow2(false)
+  };
+
 
     const [bbox, setbbox] = useState("grid");
-    const [startDate, setStartDate] = useState(new Date());
-    const [endDate, setEndDate] = useState(new Date());
+    const [startDate, setStartDate] = useState();
+    
+    const [endDate, setEndDate] = useState();
     const [publisher, setPublisher]  = useState('1');
     const [organizationlist,setOrganizationList] = useState([]);
     const [datatype, setDatatype]  = useState();
@@ -47,7 +53,7 @@ const Add = () => {
     const [country, setCountry]  = useState();
     const [countrylist,setCountrylist] = useState([]);
     const [organization, setOrganization]  = useState('1');
-    const [project, setProject]  = useState('TCAP');
+    const [project, setProject]  = useState('1');
     const [projectlist,setProjectlist] = useState([]);
     const [contact, setContact]  = useState('1');
     const [contactlist,setContactlist] = useState([]);
@@ -60,12 +66,12 @@ const Add = () => {
     const [parameter, setParameter]  = useState('');
     const [parameterlist,setParameterlist] = useState([]);
     const [currentTime, setCurrentTime] = useState(new Date());
-    const [title, setTitle] = useState('Risk data collection using drone.');
-    const [description, setDescription] = useState('Drone was flown over the south post part of Nanumaga.');
+    const [title, setTitle] = useState('');
+    const [description, setDescription] = useState('');
     const [path, setPath] = useState('/home/anuj/Desktop/angular/crews/filename.las');
     const [restricted, setRestricted] = useState(true);
     const [token, setToken] = useState('');
-  
+    const [extent, setExtent] = useState();
     const handleTitle = event => {
       setTitle(event.target.value);
     };
@@ -75,6 +81,9 @@ const Add = () => {
     const handlePath = event => {
       setPath(event.target.value);
     };
+    const handeleExtent = e=>{
+      setExtent(e.target.value)
+    }
   
     const fetchOrganizations = () => {
         axios
@@ -277,20 +286,35 @@ const Add = () => {
       }
         
       const handleSubmit=(e)=>{
+
+        if (title === '' || description === '' || startDate === '' || endDate === '' || datatype === ''|| project === '' ||
+        contact === '' || tag === '' || country === '' || parameter === '' || extent === '' || restricted === '' || topic ==='' ||
+        rowsData === '' || flag === ''){
+
+          setinfoshow2(true)
+        }
+        else {
         console.log(rowsData)
         var arr_urls = [];
         for (var i=0; i<rowsData.length; i++){
             console.log(rowsData[i].fullName, rowsData[i].emailAddress)
             arr_urls.push({"url":rowsData[i].fullName,"path":rowsData[i].emailAddress})
         }
-
+        var extent_arr = [];
+        var splitted = extent.split(', ');
+        for (var i=0; i<splitted.length; i++){
+          var split2 = splitted[i].split('=')
+          extent_arr.push({"name":split2[0],"value":split2[1]})
+      }
+   //   console.log(extent_arr)
+        
         const login = {username:"admin", password:'3fZd6x68FqDgi88cyN8P!'};
         const metadata = { title: title, description: description, version:"1.0.0", temporal_coverage_from: formatDate(startDate), temporal_coverage_to: formatDate(endDate), data_type: datatype, project_id: project,
-          publisher_id:publisher, contact_id: contact, tag:getkeyArray(tag), country:[country],parameters: getkeyArray(parameter),extents:[], is_checked:true, is_restricted:restricted, topic: getkeyArray(topic), 
+          publisher_id:publisher, contact_id: contact, tag:getkeyArray(tag), country:[country],parameters: getkeyArray(parameter),extents:extent_arr, is_checked:true, is_restricted:restricted, topic: getkeyArray(topic), 
           urls:arr_urls,flag: getkeyArray(flag), user_created_id:contact};
           console.log(metadata)
           //const metadata = { title: title, description: description, temportal_coverage_from: formatDate(startDate), temportal_coverage_to: formatDate(endDate), data_type: datatype };
-          
+          console.log(metadata)
         axios.post('https://opmdata.gem.spc.int/api/auth/signin', login)
           .then(response => {
             const access = response.data.accessToken;
@@ -308,7 +332,7 @@ const Add = () => {
           
        
       // const formattedDateTime = startDate.toISOString();
-  
+        }
        // console.log(metadata)
         e.currentTarget.blur();
         }
@@ -388,7 +412,15 @@ const Add = () => {
       <label for="exampleInputEmail1">Data Type</label> <span style={{ color: 'red' }}>*</span>
       <select  className="form-select form-select-sm"  id="exampleInputEmail2" aria-label=".form-select-sm example"
               value={datatype}
-              onChange={(e) => setDatatype(e.currentTarget.value)}
+              onChange={(e) => {
+                setDatatype(e.currentTarget.value)
+                if (e.target.value === "6"){
+                  setExtent("x=value, y=value")
+                }
+                else{
+                  setExtent("xmin=value, ymin=value, xmax=value, ymax=value")
+                }
+                }}
           >
              <option value="select">-- Select --</option>
               {datatypelist.map((item) => (
@@ -464,8 +496,16 @@ const Add = () => {
         </div>
   
           </div>
+          <div className="row">
+      <div className="col-sm-12">
+      <div class="form-group form-select-sm" style={{textAlign:'left'}}>
+      <label for="exampleInputEmail1">Spatial Extent</label>  <span style={{ color: 'red' }}>*</span>
+      <input type="email" class="form-control form-select-sm" id="exampleInputEmail1" aria-describedby="emailHelp" placeholder="Sptial Extents" onChange={handeleExtent} value={extent}/>
+    </div>
+      </div>
+      </div>
        <br/>
-            <div className="row">
+            <div className="row" style={{marginTop:'-15px'}}>
         <div className="col-sm-12">
                 <table className="table table-bordered table-sm">
                 <thead class="thead-dark">
@@ -574,6 +614,23 @@ const Add = () => {
   
     </div>
   </div>
+  <Modal show={infoshow2} onHide={handleinfo2} size="lg" centered={true} >
+  <Modal.Header className="btn btn-warning" >
+      Warning
+    </Modal.Header>
+      
+        <Modal.Body>
+          <div>
+          Required (<span style={{ color: 'red' }}>*</span>) fields are should not empty.
+         </div>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleinfo2}>
+            Close
+          </Button>
+         
+        </Modal.Footer>
+      </Modal>
           </>
       );
   }

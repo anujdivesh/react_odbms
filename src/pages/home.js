@@ -5,7 +5,7 @@ import axios from "axios";
 import * as ReactBootStrap from 'react-bootstrap';
 import paginationFactory, { PaginationProvider, PaginationTotalStandalone, PaginationListStandalone } from 'react-bootstrap-table2-paginator';
 import Multiselect from 'multiselect-react-dropdown';
-import { MapContainer, TileLayer,FeatureGroup, Marker, Popup, Rectangle } from 'react-leaflet';
+import { MapContainer, TileLayer,FeatureGroup, Marker, useMapEvents, Rectangle } from 'react-leaflet';
 import { EditControl } from "react-leaflet-draw";
 import {Button,Modal} from "react-bootstrap";
 import JSONPretty from 'react-json-pretty';
@@ -21,11 +21,40 @@ const Home = () => {
   const handleinfo = () => {
     setinfoshow(false)
   };
-
+  const [metadata, setMetadata] = useState('');
   const [infoshow2, setinfoshow2] = useState(false);
   const [infotext2, setinfotext2] = useState(false);
+  const infotext2Ref = useRef(false);
+  const [map, setMap] = useState(null);
+  const mapRef = useRef();
   const handleinfo2 = () => {
     setinfoshow2(false)
+  };
+
+  const handleUpdate = () => {
+    console.log('anuj')
+    const obj = JSON.parse(metadata);
+    const login = {username:"admin", password:'3fZd6x68FqDgi88cyN8P!'};
+
+
+
+    axios.post('https://opmdata.gem.spc.int/api/auth/signin', login)
+          .then(response => {
+            const access = response.data.accessToken;
+            const header = {
+              'Content-Type': 'application/json',
+              'x-access-token': access
+            }
+            console.log(header)
+            console.log(obj)
+            axios.put('https://opmdata.gem.spc.int/api/metadata/'+obj.id, obj, {headers:header})
+              .then(response2 => {
+                console.log(response2.data.message);
+                window.location.reload();
+            });
+  
+          });
+          
   };
 
 
@@ -339,6 +368,11 @@ const Home = () => {
       bboxRef.current = coordbbox;
       positionRef.current = tmp;
       zoomRef.current = 4;
+      //const map = mapRef.current;
+
+    console.log("map", mapRef.current);
+    
+      //map.flyTo([-8.541147, 179.196198], 12);
     }
     const jsonData = JSON.stringify(data2.data[0], null, 2);
     setinfotext(jsonData)
@@ -363,19 +397,76 @@ const Home = () => {
       "lastName": lastName
     }
     metadata.employees.push(employee);*/
+
+    var country = data2.data[0].countries;
+    var country_arr = [];
+    for (var i =0; i<country.length; i++){
+      country_arr.push(country[i].country_code)
+    }
+
+    metadata.id = data2.data[0].id;
     metadata.title = data2.data[0].title;
     metadata.description = data2.data[0].description;
     metadata.temporal_coverage_from = data2.data[0].temporal_coverage_from;
     metadata.temporal_coverage_to = data2.data[0].temporal_coverage_to;
-    metadata.language = data2.data[0].language;
-    metadata.version = data2.data[0].version;
+    //metadata.language = data2.data[0].language;
+    //metadata.version = data2.data[0].version;
     metadata.data_type = data2.data[0].data_type.id;
     metadata.spatial_projection_id = data2.data[0].spatial_projection.id;
     metadata.license_id = data2.data[0].license.id;
-    console.log(metadata)
+    metadata.publisher_id = data2.data[0].organization.id;
+    metadata.project_id = data2.data[0].project.id;
+    metadata.contact_id = data2.data[0].contact.id;
+    metadata.countries = country_arr;
+    metadata.is_checked = data2.data[0].is_checked;
+    metadata.is_restricted = data2.data[0].is_restricted;
+    metadata.user_created_id = data2.data[0].member.id;
 
+    var params = data2.data[0].parameters;
+    var params_arr = [];
+    for (var i =0; i<params.length; i++){
+      params_arr.push(params[i].short_name)
+    }
+    metadata.parameters = params_arr;
+
+    var tag = data2.data[0].tags;
+    var tag_arr = [];
+    for (var i =0; i<tag.length; i++){
+      tag_arr.push(tag[i].id)
+    }
+    metadata.tag = tag_arr;
+
+    var topic = data2.data[0].topics;
+    var topic_arr = [];
+    for (var i =0; i<topic.length; i++){
+      topic_arr.push(topic[i].id)
+    }
+    metadata.topic = topic_arr;
+
+    var flag = data2.data[0].flags;
+    var flag_arr = [];
+    for (var i =0; i<flag.length; i++){
+      flag_arr.push(flag[i].id)
+    }
+    metadata.flag = flag_arr;
+
+    var extents = data2.data[0].spatial_extents;
+    var extent_arr = [];
+    for (var i =0; i<extents.length; i++){
+      extent_arr.push({name: extents[i].extent_name , value: extents[i].value})
+    }
+    metadata.extents = extent_arr;
+
+    var urls = data2.data[0].sourceurls;
+    var url_arr = [];
+    for (var i =0; i<urls.length; i++){
+      url_arr.push({url: urls[i].url_name , path: urls[i].value})
+    }
+    metadata.ursl = url_arr;
     var dataaa = JSON.stringify(metadata,null,2)
+    infotext2Ref.current = dataaa;
     setinfotext2(dataaa)
+    setMetadata(dataaa)
     setLoading(true)
     setinfoshow2(true)
   }
@@ -394,6 +485,10 @@ const Home = () => {
   const handleTitle = event => {
     titleref.current = event.target.value;
     setTitle(event.target.value);
+  };
+  
+  const handlemetatext = event => {
+    setMetadata(event.target.value);
   };
   
 
@@ -485,7 +580,7 @@ mapContainer.current.on(L.Draw.Event.CREATED, function(e) {
         
       }  
       return () => { _isMounted.current = false }; 
-      },[]);
+      },[mapRef]);
     return (
         <div className="container-fluid">
             <main id="bodyWrapper">
@@ -759,7 +854,7 @@ mapContainer.current.on(L.Draw.Event.CREATED, function(e) {
         <Modal.Body>
           <div>
             <div style={{height:'200px', width:'100%'}}>
-        <MapContainer center={positionRef.current} zoom={zoomRef.current} scrollWheelZoom={true}>
+        <MapContainer center={positionRef.current} zoom={zoomRef.current} scrollWheelZoom={true} ref={mapRef}>
           
   <TileLayer
     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -799,14 +894,14 @@ mapContainer.current.on(L.Draw.Event.CREATED, function(e) {
       
         <Modal.Body>
           <div>
-          <textarea class="form-control full-width" rows="20" placeholder="Metadata details" width="100%">
+          <textarea class="form-control full-width" rows="20" placeholder="Metadata details" width="100%" value={metadata} onChange={handlemetatext}>
           {infotext2}
           </textarea>
 
          </div>
         </Modal.Body>
         <Modal.Footer>
-        <Button variant="warning" onClick={handleinfo2}>
+        <Button variant="warning" onClick={handleUpdate}>
             Update
           </Button>
           <Button variant="secondary" onClick={handleinfo2}>

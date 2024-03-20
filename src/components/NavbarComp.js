@@ -1,4 +1,4 @@
-import React, {Component, useEffect, useState} from "react";
+import React, {Component} from "react";
 import '../css/nav.css';
 import Nav from 'react-bootstrap/Nav';
 import Navbar from 'react-bootstrap/Navbar';
@@ -18,9 +18,9 @@ import Search from "../pages/search";
 //import Signup from "../pages/signup";
 import Login from '../pages/login';
 import Signup from '../pages/signup';
-import AuthService from "../services/auth.service";
+//import AuthService from "../services/auth.service";
 
-import EventBus from "../common/EventBus";
+//import EventBus from "../common/EventBus";
 export default class NavbarComp extends Component {
   
     render (){

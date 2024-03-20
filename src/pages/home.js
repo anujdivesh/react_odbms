@@ -5,28 +5,66 @@ import axios from "axios";
 import * as ReactBootStrap from 'react-bootstrap';
 import paginationFactory, { PaginationProvider, PaginationTotalStandalone, PaginationListStandalone } from 'react-bootstrap-table2-paginator';
 import Multiselect from 'multiselect-react-dropdown';
-import { MapContainer, TileLayer,FeatureGroup, Marker, useMapEvents, Rectangle } from 'react-leaflet';
+import { MapContainer, TileLayer,FeatureGroup} from 'react-leaflet';
 import { EditControl } from "react-leaflet-draw";
 import {Button,Modal} from "react-bootstrap";
 import JSONPretty from 'react-json-pretty';
 import { MdOutlinePageview } from "react-icons/md";
 import { FaEdit } from "react-icons/fa";
-
+import * as L from 'leaflet';
+import 'leaflet-draw';
+import 'leaflet/dist/leaflet.css'; // Import Leaflet CSS
+import 'leaflet-draw/dist/leaflet.draw.css'; // Import Leaflet Draw CSS
 
 const Home = () => {
+
+  //VARIABLES
   var JSONPrettyMon = require('react-json-pretty/dist/monikai');
-  //MODEL
   const [infoshow, setinfoshow] = useState(false);
   const [infotext, setinfotext] = useState(false);
-  const handleinfo = () => {
-    setinfoshow(false)
-  };
   const [metadata, setMetadata] = useState('');
   const [infoshow2, setinfoshow2] = useState(false);
   const [infotext2, setinfotext2] = useState(false);
   const infotext2Ref = useRef(false);
-  const [map, setMap] = useState(null);
-  const mapRef = useRef();
+  const layer = useRef(null);
+  const mapContainer = useRef(null);
+  const baseLayer = useRef();
+  const _isMounted = useRef(true);
+  const [title, setTitle] = useState('');
+  const [extent, setExtent] = useState('');
+  const extentref = useRef('');
+  const titleref = useRef('%');
+  const countryref = useRef('%');
+  const datatyperef = useRef('%');
+  const projectref = useRef('%');
+  const isMarkerRef = useRef();
+  const positionRef = useRef([0.878032, 185.843298]);
+  const zoomRef = useRef(3);
+  const markerRef = useRef([51.505, -0.09])
+  const bboxRef = useRef([[-20.3034175184893,181.97255105015114],[-15.241789855961722,175.9708637472084]]);
+  const countryFlagRef = useRef(require('../flags/FJI.png'))
+  const [loading, setLoading] =useState(true);
+  const [obsSource, setobsSource] =useState([]);
+  const [parameter, setParameter]  = useState([{key:'%',label:"%"}]);
+  const [parameterlist,setParameterlist] = useState([]);
+  const [country, setCountry]  = useState();
+  const [countrylist,setCountrylist] = useState([]);
+  const [datatype, setDatatype]  = useState();
+  const [datatypelist,setDatatypelist] = useState([]);
+  const [project, setProject]  = useState('');
+  const [projectlist,setProjectlist] = useState([]);
+  const [tag, setTag]  = useState([{key:'Oceanography',label:"Oceanography"}]);
+  const [taglist,setTaglist] = useState([]);
+  const [topic, setTopic]  = useState([{key:'Geoscience',label:"Geoscience"}]);
+  const [topiclist,setTopiclist] = useState([]);
+  const [checked, setChecked] = React.useState(false);
+
+
+
+
+  const handleinfo = () => {
+    setinfoshow(false)
+  };
   const handleinfo2 = () => {
     setinfoshow2(false)
   };
@@ -57,9 +95,6 @@ const Home = () => {
           
   };
 
-
-
-  //Leaflet
   const _onEdited = e => {
     let numEdited = 0;
     e.layers.eachLayer(layer => {
@@ -86,41 +121,6 @@ const Home = () => {
 
   };
   
-  const mapContainer = useRef(null);
-  const baseLayer = useRef();
-  const _isMounted = useRef(true);
-  const [title, setTitle] = useState('');
-  const [extent, setExtent] = useState('');
-  const extentref = useRef('');
-  const titleref = useRef('%');
-  const countryref = useRef('%');
-  const datatyperef = useRef('%');
-  const projectref = useRef('%');
-  const isMarkerRef = useRef();
-  const positionRef = useRef([0.878032, 185.843298]);
-  const zoomRef = useRef(3);
-  const markerRef = useRef([51.505, -0.09])
-  const bboxRef = useRef([[-20.3034175184893,181.97255105015114],[-15.241789855961722,175.9708637472084]]);
-  const countryFlagRef = useRef(require('../flags/FJI.png'))
-  const [players, setPlayers] =useState([]);
-  const [loading, setLoading] =useState(true);
-  const [loading2, setLoading2] =useState(true);
-  const [obsSource, setobsSource] =useState([]);
-  const [parameter, setParameter]  = useState('');
-  const [parameterlist,setParameterlist] = useState([]);
-  const [country, setCountry]  = useState();
-  const [countrylist,setCountrylist] = useState([]);
-  const [datatype, setDatatype]  = useState();
-  const [datatypelist,setDatatypelist] = useState([]);
-  const [project, setProject]  = useState('');
-  const [projectlist,setProjectlist] = useState([]);
-  const [tag, setTag]  = useState([{key:1,label:"Oceanography"}]);
-  const [taglist,setTaglist] = useState([]);
-  const [topic, setTopic]  = useState([{key:1,label:"Geoscience"}]);
-  const [topiclist,setTopiclist] = useState([]);
-  const [checked, setChecked] = React.useState(false);
-
-
   const handleClick = (e) => {
       setChecked(!checked)
       e.currentTarget.blur();
@@ -138,29 +138,28 @@ const Home = () => {
           console.log(data2.data)
           for (var i=0; i<data2.data.length; i++){
               let temp = [];
-              var country = data2.data[i].countries[0].country_name;
-              var title = data2.data[i].title;
-              var datatype = data2.data[i].data_type.datatype_code;
-              var project = data2.data[i].project.project_code;
-              var is_restricted = data2.data[i].is_restricted;
-              var email = data2.data[i].contact.email;
-              var version = data2.data[i].version;
+              var countryx = data2.data[i].countries[0].country_name;
+              var titlex = data2.data[i].title;
+              var datatypex = data2.data[i].data_type.datatype_code;
+              var projectx = data2.data[i].project.project_code;
+              var is_restrictedx = data2.data[i].is_restricted;
+              var emailx = data2.data[i].contact.email;
+              var versionx = data2.data[i].version;
               temp.push({
                   "id":counter,
                   "idx":data2.data[i].id,
-                  "title":title,
-                  "datatype":datatype,
-                  "country":country.toString(),
-                  "project":project,
-                  "is_restricted":is_restricted,
-                  "email":email,
-                  "version":version
+                  "title":titlex,
+                  "datatype":datatypex,
+                  "country":countryx.toString(),
+                  "project":projectx,
+                  "is_restricted":is_restrictedx,
+                  "email":emailx,
+                  "version":versionx
               })
               counter = counter + 1;
               setobsSource(prevData =>[...prevData, ...temp]);
           }
 
-          setPlayers(data2.data)
           setLoading(true)
         }
         else{
@@ -170,28 +169,28 @@ const Home = () => {
               title:titleref.current,
               datatype_id:datatyperef.current,
               country:countryref.current,
-              parameters:"%",
-              tag:"%",
-              topic:"%",
+              parameters:parameter[0].key,
+              tag:tag[0].key,
+              topic:topic[0].key,
               project:projectref.current
           
           }
 
           const data2 = await axios.post("https://opmdata.gem.spc.int/api/metadata/findByMultipleParam", params);
           let counter = 1;
-          console.log(data2.data)
-          for (var i=0; i<data2.data.length; i++){
+          console.log(params)
+          for (var b=0; b<data2.data.length; b++){
               let temp = [];
-              var country = data2.data[i].countries[0].country_name;
-              var title = data2.data[i].title;
-              var datatype = data2.data[i].data_type.datatype_code;
-              var project = data2.data[i].project.project_code;
-              var is_restricted = data2.data[i].is_restricted;
-              var email = data2.data[i].contact.email;
-              var version = data2.data[i].version;
+              var country = data2.data[b].countries[0].country_name;
+              var title = data2.data[b].title;
+              var datatype = data2.data[b].data_type.datatype_code;
+              var project = data2.data[b].project.project_code;
+              var is_restricted = data2.data[b].is_restricted;
+              var email = data2.data[b].contact.email;
+              var version = data2.data[b].version;
               temp.push({
                   "id":counter,
-                  "idx":data2.data[i].id,
+                  "idx":data2.data[b].id,
                   "title":title,
                   "datatype":datatype,
                   "country":country.toString(),
@@ -204,7 +203,6 @@ const Home = () => {
               setobsSource(prevData =>[...prevData, ...temp]);
           }
 
-          setPlayers(data2.data)
           setLoading(true)
         }
       }
@@ -238,7 +236,7 @@ const Home = () => {
         if(response.status === 200){
           var temp=[]
           for (var i =0; i <data.length; i++){
-            temp.push({key:data[i].id, label:data[i].name})
+            temp.push({key:data[i].name, label:data[i].name})
           }
             //check the api call is success by stats code 200,201 ...etc
             setTaglist(temp)
@@ -299,7 +297,7 @@ const Home = () => {
         if(response.status === 200){
           var temp=[]
           for (var i =0; i <data.length; i++){
-            temp.push({key:data[i].id, label:data[i].name})
+            temp.push({key:data[i].name, label:data[i].name})
           }
             //check the api call is success by stats code 200,201 ...etc
             setTopiclist(temp)
@@ -329,8 +327,38 @@ const Home = () => {
     }
   }
 
+  function addMarker(map, markercoord) {
+  
+    const redIcon = new L.Icon({
+      iconUrl:
+        "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png",
+      shadowUrl:
+        "https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png",
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+      popupAnchor: [1, -34],
+      shadowSize: [41, 41]
+    });
+
+    var layer = L.marker(markercoord,{icon:redIcon,id:999}).addTo(map);//.openPopup();
+    map.flyTo(markercoord, 12);
+    return layer;
+  
+  
+  }
+
+  function addBBox(map, bbox) {
+  
+    var rect = L.rectangle(bbox, {color: '#FF5733', weight: 3}).addTo(map);
+    map.fitBounds(bbox);
+    return rect;
+  
+  
+  }
+  
   const getOneData = async (row) => {
     setLoading(false)
+    
     const data2 = await axios.get("https://opmdata.gem.spc.int/api/metadata/id/"+row.idx);
     
     countryFlagRef.current =  require('../flags/'+data2.data[0].countries[0].country_code+'.png')
@@ -369,8 +397,9 @@ const Home = () => {
       positionRef.current = tmp;
       zoomRef.current = 4;
       //const map = mapRef.current;
-
-    console.log("map", mapRef.current);
+   // console.log('map state', map);
+    //console.log("map ref", mapRef);
+    
     
       //map.flyTo([-8.541147, 179.196198], 12);
     }
@@ -378,13 +407,16 @@ const Home = () => {
     setinfotext(jsonData)
     setLoading(true)
     setinfoshow(true)
+    setTimeout(function() {
+      
+    initMap(isMarkerRef.current, markerRef.current, bboxRef.current);
+    }, 300);
   }
 
   const editData = async (row) => {
     setLoading(false)
     const data2 = await axios.get("https://opmdata.gem.spc.int/api/metadata/id/"+row.idx);
     
-    const jsonData = JSON.stringify(data2.data[0], null, 2);
     var metadata = {};
     /*
     var employees = []
@@ -424,43 +456,44 @@ const Home = () => {
 
     var params = data2.data[0].parameters;
     var params_arr = [];
-    for (var i =0; i<params.length; i++){
-      params_arr.push(params[i].short_name)
+    for (var a =0; a<params.length; a++){
+      params_arr.push(params[a].short_name)
     }
     metadata.parameters = params_arr;
 
     var tag = data2.data[0].tags;
+    console.log('tag',tag)
     var tag_arr = [];
-    for (var i =0; i<tag.length; i++){
-      tag_arr.push(tag[i].id)
+    for (var j =0; j<tag.length; j++){
+      tag_arr.push(tag[j].id)
     }
     metadata.tag = tag_arr;
 
     var topic = data2.data[0].topics;
     var topic_arr = [];
-    for (var i =0; i<topic.length; i++){
-      topic_arr.push(topic[i].id)
+    for (var k =0; k<topic.length; k++){
+      topic_arr.push(topic[k].id)
     }
     metadata.topic = topic_arr;
 
     var flag = data2.data[0].flags;
     var flag_arr = [];
-    for (var i =0; i<flag.length; i++){
-      flag_arr.push(flag[i].id)
+    for (var l =0; l<flag.length; l++){
+      flag_arr.push(flag[l].id)
     }
     metadata.flag = flag_arr;
 
     var extents = data2.data[0].spatial_extents;
     var extent_arr = [];
-    for (var i =0; i<extents.length; i++){
-      extent_arr.push({name: extents[i].extent_name , value: extents[i].value})
+    for (var m =0; m<extents.length; m++){
+      extent_arr.push({name: extents[m].extent_name , value: extents[m].value})
     }
     metadata.extents = extent_arr;
 
     var urls = data2.data[0].sourceurls;
     var url_arr = [];
-    for (var i =0; i<urls.length; i++){
-      url_arr.push({url: urls[i].url_name , path: urls[i].value})
+    for (var n =0; n<urls.length; n++){
+      url_arr.push({url: urls[n].url_name , path: urls[n].value})
     }
     metadata.ursl = url_arr;
     var dataaa = JSON.stringify(metadata,null,2)
@@ -492,34 +525,38 @@ const Home = () => {
   };
   
 
-  const columns2 = [
-      {dataField: "0", text:"playername",style:{fontSize:'15px', padding:'1px'}},
-      {dataField: "1", text:"country",style:{fontSize:'15px', padding:'1px'}},
-      {dataField: "2", text:"countrycode",style:{fontSize:'15px', padding:'1px'}},
-      {dataField: "edit", text:"View",formatter: rankFormatter,style:{fontSize:'15px', padding:'1px'}}
-  ]
 
 const options = {
   custom: true,
   totalSize: obsSource.length
 };
 
-const rowStyle = { backgroundColor: '#c8e6c9', height: '3px', padding: '3px 0' };
 
-
-  function initMap(){
-    /*
+  function initMap(isMarker, markercoord, bbox){
+    
       baseLayer.current = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
           attribution: '&copy; Pacific Community (OSM)',
           detectRetina: true
       });
       //console.log('Home Rendered!!');
-      mapContainer.current = L.map('map', {
+      mapContainer.current = null;
+        mapContainer.current = L.map('mapId', {
           zoom: 3,
           center: [0.878032, 185.843298]
         });
+        
         baseLayer.current.addTo(mapContainer.current); 
 
+        if (isMarker){
+        layer.current = addMarker(mapContainer.current,markercoord);
+        }
+        else{
+          layer.current = addBBox(mapContainer.current, bbox)
+        }
+        
+     // }
+
+        /*
         var m_drawn_features = new L.FeatureGroup();
    mapContainer.current.addLayer(m_drawn_features);
 
@@ -565,22 +602,15 @@ mapContainer.current.on(L.Draw.Event.CREATED, function(e) {
   useEffect(() => {  
 
       if (_isMounted.current){
-        initMap();
-
         fetchparameters();
-
         fetchtags();
         fetchtopic();
         fetchcountry();
         fetchdatatype();
         fetchproject();
-    //    getPlayerData();
-   
-   
-        
       }  
       return () => { _isMounted.current = false }; 
-      },[mapRef]);
+      },[]);
     return (
         <div className="container-fluid">
             <main id="bodyWrapper">
@@ -599,7 +629,7 @@ mapContainer.current.on(L.Draw.Event.CREATED, function(e) {
       <div className="row" style={{marginTop:'0px'}}>
     <div className="col-sm-4">
     <div className="form-group form-select-sm" style={{textAlign:'left'}}>
-      <label for="exampleInputEmail1">Country</label> <span style={{ color: 'red' }}>*</span>
+      <label htmlFor="exampleInputEmail1">Country</label> <span style={{ color: 'red' }}>*</span>
       <select  className="form-select form-select-sm"  id="exampleInputEmail2" aria-label=".form-select-sm example"
               disabled={false}
               value={country}
@@ -610,7 +640,7 @@ mapContainer.current.on(L.Draw.Event.CREATED, function(e) {
                 
                 
           >
-            <option value="select">-- Select --</option>
+            <option value="%">-- Select --</option>
               {countrylist.map((item) => (
               <option key={item.country_code} value={item.country_code}>
                   {item.country_name}
@@ -621,7 +651,7 @@ mapContainer.current.on(L.Draw.Event.CREATED, function(e) {
       </div>
       <div className="col-sm-4">
       <div className="form-group form-select-sm" style={{textAlign:'left'}}>
-      <label for="exampleInputEmail1">Data Type</label> <span style={{ color: 'red' }}>*</span>
+      <label htmlFor="exampleInputEmail1">Data Type</label> <span style={{ color: 'red' }}>*</span>
       <select  className="form-select form-select-sm"  id="exampleInputEmail2" aria-label=".form-select-sm example"
               value={datatype}
               onChange={(e) => {
@@ -629,7 +659,7 @@ mapContainer.current.on(L.Draw.Event.CREATED, function(e) {
                 setDatatype(e.currentTarget.value)
                 e.currentTarget.blur();}}
           >
-             <option value="select">-- Select --</option>
+             <option value="%">-- Select --</option>
               {datatypelist.map((item) => (
               <option key={item.datatype_code} value={item.datatype_code}>
                   {item.datatype_name}
@@ -641,7 +671,7 @@ mapContainer.current.on(L.Draw.Event.CREATED, function(e) {
   </div>
   <div className="col-sm-4">
   <div className="form-group form-select-sm" style={{textAlign:'left'}}>
-      <label for="exampleInputEmail1">Project</label> <span style={{ color: 'red' }}>*</span>
+      <label htmlFor="exampleInputEmail1">Project</label> <span style={{ color: 'red' }}>*</span>
       <select  className="form-select form-select-sm"  id="exampleInputEmail2" aria-label=".form-select-sm example"
               disabled={false}
               value={project}
@@ -650,7 +680,7 @@ mapContainer.current.on(L.Draw.Event.CREATED, function(e) {
                 setProject(e.currentTarget.value)
                 e.currentTarget.blur();}}
           >
-            <option value="select">-- Select --</option>
+            <option value="%">-- Select --</option>
               {projectlist.map((item) => (
               <option key={item.project_code} value={item.project_code}>
                   {item.project_name}
@@ -664,7 +694,7 @@ mapContainer.current.on(L.Draw.Event.CREATED, function(e) {
       <div className="row" style={{marginTop:'0px'}}>
     <div className="col-sm-6">
     <div className="form-group form-select-sm" style={{textAlign:'left'}}>
-      <label for="exampleInputEmail1">Parameters</label>
+      <label htmlFor="exampleInputEmail1">Parameters</label>
       <Multiselect
           backgroundcolor="#0e1111" 
           displayValue="label"
@@ -678,6 +708,7 @@ mapContainer.current.on(L.Draw.Event.CREATED, function(e) {
             console.log(event);
           }}
           onSelect={(event) => {
+         //   console.log()
             setParameter(event);
           }}
           options={parameterlist}
@@ -688,7 +719,7 @@ mapContainer.current.on(L.Draw.Event.CREATED, function(e) {
       </div>
       <div className="col-sm-6">
     <div className="form-group form-select-sm" style={{textAlign:'left'}}>
-      <label for="exampleInputEmail1">Tag</label> <span style={{ color: 'red' }}>*</span>
+      <label htmlFor="exampleInputEmail1">Tag</label>
       
       <Multiselect
           displayValue="label"
@@ -703,6 +734,7 @@ mapContainer.current.on(L.Draw.Event.CREATED, function(e) {
           options={taglist}
           selectedValues={[{key:1,label:"Oceanography"}]}
           showCheckbox
+          selectionLimit={1}
           avoidHighlightFirstOption
         />
   
@@ -712,7 +744,7 @@ mapContainer.current.on(L.Draw.Event.CREATED, function(e) {
       <div className="row" style={{marginTop:'0px'}}>
       <div className="col-sm-6">
       <div className="form-group form-select-sm" style={{textAlign:'left'}}>
-      <label for="exampleInputEmail1">Topic</label> <span style={{ color: 'red' }}>*</span>
+      <label htmlFor="exampleInputEmail1">Topic</label> 
       <Multiselect
           displayValue="label"
           isObject={true}
@@ -725,6 +757,7 @@ mapContainer.current.on(L.Draw.Event.CREATED, function(e) {
           options={topiclist}
           selectedValues={[{key:1,label:"Geoscience"}]}
           showCheckbox
+          selectionLimit={1}
           avoidHighlightFirstOption 
         />
     </div>
@@ -732,7 +765,7 @@ mapContainer.current.on(L.Draw.Event.CREATED, function(e) {
   </div>
   <div className="col-sm-6">
     <div className="form-group form-select-sm" style={{textAlign:'left'}}>
-      <label for="exampleInputEmail1">Publisher</label> <span style={{ color: 'red' }}>*</span>
+      <label htmlFor="exampleInputEmail1">Publisher</label> 
       
       <Multiselect
       style={{backgroundColor:'red', color:'red', height:"5px", marginTop:"10px"}}
@@ -779,7 +812,7 @@ mapContainer.current.on(L.Draw.Event.CREATED, function(e) {
       <br/>
  </div>
  <div className="col-sm-6" id="map"  style={{padding:'0', marginRight:'0%'}}>
- <MapContainer center={[0.878032, 185.843298]} zoom={3} scrollWheelZoom={true}>
+ <MapContainer center={[0.878032, 185.843298]} zoom={3} scrollWheelZoom={true} >
   <TileLayer
     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     url="https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"
@@ -853,28 +886,9 @@ mapContainer.current.on(L.Draw.Event.CREATED, function(e) {
       
         <Modal.Body>
           <div>
-            <div style={{height:'200px', width:'100%'}}>
-        <MapContainer center={positionRef.current} zoom={zoomRef.current} scrollWheelZoom={true} ref={mapRef}>
-          
-  <TileLayer
-    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-    url="https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"
-  />
-  {isMarkerRef.current ?
-  <Marker position={markerRef.current}></Marker>
-  :null}
-
-  {isMarkerRef.current ? null:
-   <Rectangle
-   bounds={bboxRef.current}
-   color="#FF5733"
- />
- }
-
-<img className="edit-location-button" src={countryFlagRef.current} style={{width:"100px", height:"60px"}} />
-</MapContainer>
-
-</div>
+            <div id="mapId" style={{height:'250px', width:'100%'}}>
+              <img className="edit-location-button" src={countryFlagRef.current} style={{width:"100px", height:"60px"}} />
+            </div>
 <br/>
         <JSONPretty  id="json-pretty" data={infotext} theme={JSONPrettyMon} mainStyle="padding:-10em; height:300px;" valueStyle="font-size:1em"></JSONPretty>
         </div>

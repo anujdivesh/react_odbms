@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Form, Button, Alert } from "react-bootstrap";
 import "../css/login.css";
 import AuthService from "../services/auth.service";
-import BackgroundImage from "../assets/images/background.png";
-import Logo from "../assets/images/logo.png";
+import BackgroundImage from "../assets/images/oceanpic3.jpg";
+import Logo from "../assets/images/spclogo.png";
 
 const Login = () => {
   let navigate = useNavigate();
@@ -17,13 +17,13 @@ const Login = () => {
     const handleSubmit = async (event) => {
       event.preventDefault();
       setLoading(true);
-      await delay(500);
+     await delay(500);
       console.log(`Username :${inputUsername}, Password :${inputPassword}`);
       AuthService.login(inputUsername, inputPassword).then(
         () => {
           console.log('success')
-          navigate("/oceandata");
-          window.location.reload();
+       //   navigate("/oceandata");
+         // window.location.reload();
         },
         (error) => {
           console.log(error)
@@ -52,14 +52,18 @@ const Login = () => {
     }
   
     return (
-      <div
+     
+         <main id="bodyWrapper">
+        <div id="mapWrapper">
+        <div id="map33">
+        <div
         className="sign-in__wrapper"
-        style={{ backgroundColor: 'white' }}
+        style={{ backgroundImage: `url(${BackgroundImage})` }}
       >
         {/* Overlay */}
         <div className="sign-in__backdrop"></div>
         {/* Form */}
-        <Form className="shadow p-4 bg-white rounded" onSubmit={handleSubmit}>
+        <Form className="shadow p-4 bg-white rounded" onSubmit={handleSubmit} o>
           {/* Header */}
           <img
             className="img-thumbnail mx-auto d-block mb-2"
@@ -120,10 +124,14 @@ const Login = () => {
           </div>
         </Form>
         {/* Footer */}
+      
+        </div>
         <div className="w-100 mb-2 position-absolute bottom-0 start-50 translate-middle-x text-white text-center">
           Pacific Community (SPC)| &copy;2024
         </div>
       </div>
+      </div>
+      </main>
     );
 }
 

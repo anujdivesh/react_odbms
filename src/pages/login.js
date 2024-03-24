@@ -10,20 +10,27 @@ const Login = () => {
   let navigate = useNavigate();
     const [inputUsername, setInputUsername] = useState("");
     const [inputPassword, setInputPassword] = useState("");
-  
+    const [email, setEmail] = useState("");
+    const [checked, setChecked] = React.useState(false);
     const [show, setShow] = useState(false);
     const [loading, setLoading] = useState(false);
-  
+    const [message, setMessage] = useState("");
+    const [messagegood, setMessagegood] = useState("");
+    const handleClick = (e) => {
+      setChecked(!checked)
+      e.currentTarget.blur();
+    }
     const handleSubmit = async (event) => {
       event.preventDefault();
       setLoading(true);
+      setMessage("");
      await delay(500);
       console.log(`Username :${inputUsername}, Password :${inputPassword}`);
       AuthService.login(inputUsername, inputPassword).then(
         () => {
           console.log('success')
-       //   navigate("/oceandata");
-         // window.location.reload();
+          navigate("/oceandata");
+          window.location.reload();
         },
         (error) => {
           console.log(error)
@@ -35,7 +42,7 @@ const Login = () => {
             error.toString();
 
           setLoading(false);
-        //  setMessage(resMessage);
+          setMessage(resMessage);
         }
       );
 
@@ -45,14 +52,37 @@ const Login = () => {
       setLoading(false);
     };
   
-    const handlePassword = () => {};
+    const handlePassword = () => {
+      console.log('resetting password!');
+      setMessage(null)
+      setMessagegood(null)
+      AuthService.forgot_password(email).then(
+        () => {
+          setMessagegood('Activation Link has been sent on your email.')
+          //navigate("/oceandata");
+          //window.location.reload();
+        },
+        (error) => {
+          console.log(error)
+          const resMessage =
+            (error.response &&
+              error.response.data &&
+              error.response.data.message) ||
+            error.message ||
+            error.toString();
+
+          setLoading(false);
+          setMessage(resMessage);
+        }
+      );
+    };
   
     function delay(ms) {
       return new Promise((resolve) => setTimeout(resolve, ms));
     }
   
     return (
-     
+        <>
          <main id="bodyWrapper">
         <div id="mapWrapper">
         <div id="map33">
@@ -61,7 +91,7 @@ const Login = () => {
         style={{ backgroundImage: `url(${BackgroundImage})` }}
       >
         {/* Overlay */}
-        <div className="sign-in__backdrop"></div>
+      {/*  <div className="sign-in__backdrop"></div> */}
         {/* Form */}
         <Form className="shadow p-4 bg-white rounded" onSubmit={handleSubmit} o>
           {/* Header */}
@@ -84,7 +114,9 @@ const Login = () => {
           ) : (
             <div />
           )}
-          <Form.Group className="mb-2" controlId="username" style={{textAlign:'left'}}>
+           { checked ? null :
+          <div>
+          <Form.Group className="mb-2" controlId="username" style={{textAlign:'left'}} >
             <Form.Label>Username</Form.Label>
             <Form.Control
               type="text"
@@ -113,16 +145,49 @@ const Login = () => {
               Logging In...
             </Button>
           )}
+          </div>}
           <div className="d-grid justify-content-end">
-            <Button
-              className="text-muted px-0"
-              variant="link"
-              onClick={handlePassword}
-            >
-              Forgot password?
-            </Button>
+            <div className="form-group" style={{textAlign:'left', paddingTop:'10px'}}>
+      <input className="form-check-input" type="checkbox" id="fj_ezz" name="fj_ezz" onChange={handleClick} defaultChecked={checked} />&nbsp;
+  <label className="text-muted px-0">Forgot password?</label>
+        </div>
           </div>
+          { checked ? 
+          <div>
+          <Form.Group className="mb-2" controlId="username" style={{textAlign:'left'}}>
+            <Form.Label>Email</Form.Label>
+            <Form.Control
+              type="text"
+              value={email}
+              placeholder="Username"
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </Form.Group>
+          <Button className="w-100" variant="primary" onClick={handlePassword}>
+              Reset Password
+            </Button>
+            </div>
+            :null}
+            <br/>
+        {message && (
+            <div className="form-group">
+              <div className="alert alert-danger" role="alert">
+                {message}
+              </div>
+            </div>
+          )}
+          {messagegood && (
+            <div className="form-group">
+              <div className="alert alert-success" role="alert">
+                {messagegood}
+              </div>
+            </div>
+          )}
         </Form>
+
+        
+        
         {/* Footer */}
       
         </div>
@@ -132,6 +197,7 @@ const Login = () => {
       </div>
       </div>
       </main>
+      </>
     );
 }
 

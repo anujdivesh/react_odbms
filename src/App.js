@@ -30,7 +30,6 @@ function App() {
     const user = AuthService.getCurrentUser();
 
     if (user) {
-      console.log(user)
       setCurrentUser(user);
       setShowModeratorBoard(user.roles.includes("ROLE_MODERATOR"));
       setShowAdminBoard(user.roles.includes("ROLE_ADMINEYJHBGCIOIJIUZI1NIISINR5CCI6IKPXVCJ9EYJLBWFPBCI6IM"));
@@ -50,6 +49,7 @@ function App() {
     setShowModeratorBoard(false);
     setShowAdminBoard(false);
     setCurrentUser(undefined);
+    
   };
 
   return (
@@ -58,7 +58,10 @@ function App() {
       <Router>
             <div>
         <Navbar expand="lg" bg={"navbar navbar-expand-sm navbar-custom"} variant={"dark"} style={{paddingRight:"1%",paddingLeft:"1%"}}>
-        <Navbar.Brand as={Link} to={"/oceandata"}>Ocean Data Explorer</Navbar.Brand>
+       
+        <Navbar.Brand as={Link} to={"/oceandata"}>
+          
+          Ocean Data Explorer</Navbar.Brand>
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="ms-auto">
@@ -68,11 +71,11 @@ function App() {
           )}
 
             
-            <Nav.Link as={Link} to={"/oceandata/search"}>Request</Nav.Link>
+           {/*<Nav.Link as={Link} to={"/oceandata/search"}>Request</Nav.Link>*/}
           </Nav>
           {currentUser ? (
              <Form inline="true">
-             <Button variant="warning" className="mr-sm-4" as={Link} to={"/oceandata/login"} onClick={logOut}>{currentUser.username} : Logout</Button>
+             <Button variant="warning" className="mr-sm-4" as={Link} to={"/oceandata/login"} onClick={logOut}>Logout</Button>
            </Form>
          
         ) : (

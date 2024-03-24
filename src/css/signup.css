@@ -38,7 +38,7 @@
   }
   
   .sign-in__wrapper form {
-    width: 28rem;
+    width: 40rem;
     max-width: 90%;
     z-index: 1;
     /*animation: showSignInForm 1s;*/

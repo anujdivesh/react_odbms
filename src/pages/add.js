@@ -7,8 +7,11 @@ import '../css/date.css';
 import TableRows from "./TableRows"
 import addimage from '../assets/add.png';
 import {Button,Modal} from "react-bootstrap";
+import AuthService from "../services/auth.service";
+
 const Add = () => {
     const [rowsData, setRowsData] = useState([]);
+    const [unauthorized, setUnauthorized] = useState(false);
     const addTableRows = ()=>{
 
         const rowsInput={
@@ -240,6 +243,14 @@ const Add = () => {
   
   
       useEffect(() => {  
+        const user = AuthService.getCurrentUser();
+        console.log(user)
+        if (user == null){
+          console.log('not logged in')
+          setUnauthorized(true);
+        }
+        else{
+          setUnauthorized(false);
         fetchOrganizations();
         fetchdatatype();
         fetchcountry();
@@ -250,11 +261,11 @@ const Add = () => {
         fetchflag();
         fetchparameters();
         addTableRows();
-  
+      }
         const intervalId = setInterval(() => {
           setCurrentTime(new Date());
         }, 1000); // Update every second
-    
+     
         return () => clearInterval(intervalId); // Cleanup on component unmount
     
           },[]);
@@ -338,9 +349,10 @@ const Add = () => {
         }
   
       return (
-  
+  <div>
+      {!unauthorized ?
   <>
-  
+
           <div className="container">
             <br/>
           <div class="card">
@@ -632,6 +644,10 @@ const Add = () => {
         </Modal.Footer>
       </Modal>
           </>
+
+:
+<h2>Unauthorized Access</h2>}
+</div>
       );
   }
   

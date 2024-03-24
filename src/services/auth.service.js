@@ -2,18 +2,21 @@ import axios from "axios";
 
 const API_URL = "https://opmdata.gem.spc.int/api/auth/";
 
-const register = (username, email, password) => {
+const register = (first_name, last_name, password, email, roles, country_id) => {
   return axios.post(API_URL + "signup", {
-    username,
-    email,
+    first_name,
+    last_name,
     password,
+    email,
+    roles,
+    country_id
   });
 };
 
-const login = (username, password) => {
+const login = (email, password) => {
   return axios
     .post(API_URL + "signin", {
-      username,
+      email,
       password,
     })
     .then((response) => {
@@ -24,6 +27,17 @@ const login = (username, password) => {
       return response.data;
     });
 };
+
+const forgot_password = (email) => {
+  return axios
+    .post(API_URL + "forgotpassword", {
+      email
+    })
+    .then((response) => {
+      return response.data;
+    });
+};
+
 
 const logout = () => {
   localStorage.removeItem("user");
@@ -38,6 +52,7 @@ const AuthService = {
   login,
   logout,
   getCurrentUser,
+  forgot_password
 };
 
 export default AuthService;

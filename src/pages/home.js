@@ -15,6 +15,7 @@ import * as L from 'leaflet';
 import 'leaflet-draw';
 import 'leaflet/dist/leaflet.css'; // Import Leaflet CSS
 import 'leaflet-draw/dist/leaflet.draw.css'; // Import Leaflet Draw CSS
+import AuthService from "../services/auth.service";
 
 const Home = () => {
 
@@ -58,7 +59,7 @@ const Home = () => {
   const [topic, setTopic]  = useState([{key:'Geoscience',label:"Geoscience"}]);
   const [topiclist,setTopiclist] = useState([]);
   const [checked, setChecked] = React.useState(false);
-
+  const [token, setToken] = React.useState(null);
 
 
 
@@ -72,16 +73,10 @@ const Home = () => {
   const handleUpdate = () => {
     console.log('anuj')
     const obj = JSON.parse(metadata);
-    const login = {username:"admin", password:'3fZd6x68FqDgi88cyN8P!'};
-
-
-
-    axios.post('https://opmdata.gem.spc.int/api/auth/signin', login)
-          .then(response => {
-            const access = response.data.accessToken;
+    
             const header = {
               'Content-Type': 'application/json',
-              'x-access-token': access
+              'x-access-token': token
             }
             console.log(header)
             console.log(obj)
@@ -91,7 +86,6 @@ const Home = () => {
                 window.location.reload();
             });
   
-          });
           
   };
 
@@ -133,9 +127,15 @@ const Home = () => {
           setobsSource([])
           var myarray = extent.split(',');
           console.log(myarray)
-          const data2 = await axios.get("https://opmdata.gem.spc.int/api/metadata/findByExtent?minx="+myarray[3]+"&maxx="+myarray[2]+"&miny="+myarray[0]+"&maxy="+myarray[1]);
+          var minx = myarray[3];
+          var maxx = myarray[2];
+          var miny = myarray[1];
+          var maxy = myarray[0];
+          const data2 = await axios.get("https://opmdata.gem.spc.int/api/metadata/findByExtent?minx="+minx+"&maxx="+maxx+"&miny="+miny+"&maxy="+maxy);
           let counter = 1;
+          console.log("https://opmdata.gem.spc.int/api/metadata/findByExtent?minx="+minx+"&maxx="+maxx+"&miny="+miny+"&maxy="+maxy)
           console.log(data2.data)
+          
           for (var i=0; i<data2.data.length; i++){
               let temp = [];
               var countryx = data2.data[i].countries[0].country_name;
@@ -199,6 +199,7 @@ const Home = () => {
                   "email":email,
                   "version":version
               })
+              console.log(temp)
               counter = counter + 1;
               setobsSource(prevData =>[...prevData, ...temp]);
           }
@@ -411,6 +412,7 @@ const Home = () => {
       
     initMap(isMarkerRef.current, markerRef.current, bboxRef.current);
     }, 300);
+    
   }
 
   const editData = async (row) => {
@@ -452,7 +454,7 @@ const Home = () => {
     metadata.countries = country_arr;
     metadata.is_checked = data2.data[0].is_checked;
     metadata.is_restricted = data2.data[0].is_restricted;
-    metadata.user_created_id = data2.data[0].member.id;
+    metadata.user_created_id = data2.data[0].created_by.id;
 
     var params = data2.data[0].parameters;
     var params_arr = [];
@@ -495,7 +497,7 @@ const Home = () => {
     for (var n =0; n<urls.length; n++){
       url_arr.push({url: urls[n].url_name , path: urls[n].value})
     }
-    metadata.ursl = url_arr;
+    metadata.urls = url_arr;
     var dataaa = JSON.stringify(metadata,null,2)
     infotext2Ref.current = dataaa;
     setinfotext2(dataaa)
@@ -602,6 +604,8 @@ mapContainer.current.on(L.Draw.Event.CREATED, function(e) {
   useEffect(() => {  
 
       if (_isMounted.current){
+        const user = AuthService.getCurrentUser();
+        setToken(user.accessToken)
         fetchparameters();
         fetchtags();
         fetchtopic();
@@ -887,7 +891,7 @@ mapContainer.current.on(L.Draw.Event.CREATED, function(e) {
         <Modal.Body>
           <div>
             <div id="mapId" style={{height:'250px', width:'100%'}}>
-              <img className="edit-location-button" src={countryFlagRef.current} style={{width:"100px", height:"60px"}} />
+              <img className="edit-location-button" alt='flag' src={countryFlagRef.current} style={{width:"100px", height:"60px"}} />
             </div>
 <br/>
         <JSONPretty  id="json-pretty" data={infotext} theme={JSONPrettyMon} mainStyle="padding:-10em; height:300px;" valueStyle="font-size:1em"></JSONPretty>

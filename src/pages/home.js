@@ -21,10 +21,15 @@ const Home = () => {
 
   //VARIABLES
   var JSONPrettyMon = require('react-json-pretty/dist/monikai');
+  const [unauthorized, setUnauthorized] = useState(false);
   const [infoshow, setinfoshow] = useState(false);
   const [infotext, setinfotext] = useState(false);
   const [metadata, setMetadata] = useState('');
   const [infoshow2, setinfoshow2] = useState(false);
+  const [infoshow22, setinfoshow22] = useState(false);
+  const [message, setMessage] = useState('');
+  const [css, setCss] = useState('btn btn-warning');
+  const [header, setHeader] = useState('Success');
   const [infotext2, setinfotext2] = useState(false);
   const infotext2Ref = useRef(false);
   const layer = useRef(null);
@@ -61,30 +66,39 @@ const Home = () => {
   const [checked, setChecked] = React.useState(false);
   const [token, setToken] = React.useState(null);
 
-
-
   const handleinfo = () => {
     setinfoshow(false)
   };
   const handleinfo2 = () => {
     setinfoshow2(false)
   };
+  const handleinfo22 = () => {
+    setinfoshow22(false)
+  };
 
   const handleUpdate = () => {
-    console.log('anuj')
     const obj = JSON.parse(metadata);
     
             const header = {
               'Content-Type': 'application/json',
               'x-access-token': token
             }
-            console.log(header)
-            console.log(obj)
             axios.put('https://opmdata.gem.spc.int/api/metadata/'+obj.id, obj, {headers:header})
               .then(response2 => {
-                console.log(response2.data.message);
-                window.location.reload();
-            });
+                setinfoshow2(false)
+                setCss('btn btn-success')
+                setHeader('Success')
+                setMessage(response2.data.message)
+                setinfoshow22(true)
+            //    window.location.reload();
+            }).catch((error) => {
+              setinfoshow2(false)
+              setCss('btn btn-danger')
+              setHeader('Error')
+              setMessage('Opps! An Error Occurred. Please contact Administrator.')
+              setinfoshow22(true)
+          });
+            
   
           
   };
@@ -94,16 +108,18 @@ const Home = () => {
     e.layers.eachLayer(layer => {
       numEdited += 1;
     });
-    console.log(`_onEdited: edited ${numEdited} layers`, e);
 
   };
 
  const _onCreated = e => {
     let new_features_layer = e.layer;
     var extent_def = new_features_layer._bounds._northEast.lat+","+new_features_layer._bounds._southWest.lat+","+new_features_layer._bounds._northEast.lng+","+new_features_layer._bounds._southWest.lng;
-  console.log(extent_def)
+    var minx = new_features_layer._bounds._southWest.lng;
+    var maxx = new_features_layer._bounds._northEast.lng;
+    var miny = new_features_layer._bounds._southWest.lat;
+    var maxy = new_features_layer._bounds._northEast.lat;
   setExtent(extent_def);
-  extentref.current = extent_def;
+  extentref.current = "minx="+minx+" maxx="+maxx+" miny="+miny+" maxy="+maxy;
   };
 
   const _onDeleted = e => {
@@ -111,7 +127,6 @@ const Home = () => {
     e.layers.eachLayer(layer => {
       numDeleted += 1;
     });
-    console.log(`onDeleted: removed ${numDeleted} layers`, e);
 
   };
   
@@ -122,19 +137,22 @@ const Home = () => {
   const getPlayerData = async (e) => {
       try{
         if (checked){
-
+          if (datatyperef.current == "%"){
+            setCss('btn btn-warning')
+            setHeader('Warning')
+            setMessage("Data Type is a Required Field.")
+            setinfoshow22(true)
+          }
+          else{
           setLoading(false)
           setobsSource([])
           var myarray = extent.split(',');
-          console.log(myarray)
           var minx = myarray[3];
           var maxx = myarray[2];
           var miny = myarray[1];
           var maxy = myarray[0];
-          const data2 = await axios.get("https://opmdata.gem.spc.int/api/metadata/findByExtent?minx="+minx+"&maxx="+maxx+"&miny="+miny+"&maxy="+maxy);
+          const data2 = await axios.get("https://opmdata.gem.spc.int/api/metadata/findByExtent?minx="+minx+"&maxx="+maxx+"&miny="+miny+"&maxy="+maxy+"&datatype="+datatyperef.current);
           let counter = 1;
-          console.log("https://opmdata.gem.spc.int/api/metadata/findByExtent?minx="+minx+"&maxx="+maxx+"&miny="+miny+"&maxy="+maxy)
-          console.log(data2.data)
           
           for (var i=0; i<data2.data.length; i++){
               let temp = [];
@@ -162,7 +180,15 @@ const Home = () => {
 
           setLoading(true)
         }
+        }
         else{
+          if (countryref.current == "%" || datatyperef.current == "%"){
+            setCss('btn btn-warning')
+            setHeader('Warning')
+            setMessage("Country and Data Type are Required Fields.")
+            setinfoshow22(true)
+          }
+          else{
           setLoading(false)
           setobsSource([])
           const params = {
@@ -178,7 +204,6 @@ const Home = () => {
 
           const data2 = await axios.post("https://opmdata.gem.spc.int/api/metadata/findByMultipleParam", params);
           let counter = 1;
-          console.log(params)
           for (var b=0; b<data2.data.length; b++){
               let temp = [];
               var country = data2.data[b].countries[0].country_name;
@@ -199,13 +224,13 @@ const Home = () => {
                   "email":email,
                   "version":version
               })
-              console.log(temp)
               counter = counter + 1;
               setobsSource(prevData =>[...prevData, ...temp]);
           }
 
           setLoading(true)
         }
+      }
       }
       catch (e){
           console.log(e);
@@ -366,6 +391,15 @@ const Home = () => {
 
     var extents = data2.data[0].spatial_extents;
     
+    var dtatype = data2.data[0].data_type.id;
+    if (dtatype === 6){
+      isMarkerRef.current = true;
+    }
+    else{
+      isMarkerRef.current = false
+    }
+    //console.log(dtatype, isMarkerRef.current)
+    /*
     for (var i =0; i<extents.length; i++){
       if(extents[i].extent_name === 'x'){
         isMarkerRef.current = true;
@@ -374,12 +408,13 @@ const Home = () => {
       else{
         isMarkerRef.current = false
       }
-    }
+    }*/
     var coord_marker = [];
     var coordbbox = [];
     if (isMarkerRef.current){
-      coord_marker.push(loopToGetCoord(extents,"y"))
-      coord_marker.push(loopToGetCoord(extents,"x"))
+      coord_marker.push(loopToGetCoord(extents,"ymin"))
+      coord_marker.push(loopToGetCoord(extents,"xmin"))
+      //console.log(coord_marker)
       markerRef.current = coord_marker;
       positionRef.current = coord_marker;
       zoomRef.current = 10;
@@ -393,7 +428,7 @@ const Home = () => {
       tmp.push(loopToGetCoord(extents,"ymax"))
       tmp.push(loopToGetCoord(extents,"xmax"))
       coordbbox.push(tmp)
-      console.log(coordbbox)
+      //console.log(coordbbox)
       bboxRef.current = coordbbox;
       positionRef.current = tmp;
       zoomRef.current = 4;
@@ -416,6 +451,13 @@ const Home = () => {
   }
 
   const editData = async (row) => {
+    if (unauthorized){
+      setCss('btn btn-warning')
+      setHeader('Warning')
+      setMessage('Unauthorized access. Please Login!')
+      setinfoshow22(true)
+    }
+    else{
     setLoading(false)
     const data2 = await axios.get("https://opmdata.gem.spc.int/api/metadata/id/"+row.idx);
     
@@ -464,7 +506,6 @@ const Home = () => {
     metadata.parameters = params_arr;
 
     var tag = data2.data[0].tags;
-    console.log('tag',tag)
     var tag_arr = [];
     for (var j =0; j<tag.length; j++){
       tag_arr.push(tag[j].id)
@@ -504,6 +545,7 @@ const Home = () => {
     setMetadata(dataaa)
     setLoading(true)
     setinfoshow2(true)
+  }
   }
   function rankFormatter(cell, row, rowIndex, formatExtraData) { 
       //console.log(cell)
@@ -604,8 +646,15 @@ mapContainer.current.on(L.Draw.Event.CREATED, function(e) {
   useEffect(() => {  
 
       if (_isMounted.current){
-        const user = AuthService.getCurrentUser();
-        setToken(user.accessToken)
+        const user = AuthService.getCurrentUserCookie();
+        if (user === null || user === undefined){
+          setUnauthorized(true);
+        }
+        else{
+          setToken(user.accessToken)
+          setUnauthorized(false);
+        }
+          
         fetchparameters();
         fetchtags();
         fetchtopic();
@@ -618,7 +667,7 @@ mapContainer.current.on(L.Draw.Event.CREATED, function(e) {
     return (
         <div className="container-fluid">
             <main id="bodyWrapper">
-          <div id="mapWrapper">
+          <div id="mapWrapper" style={{marginLeft:'-0.6%',marginRight:'-0.6%'}}>
 
  <div className="row">
  <div className="col-sm-6" style={{backgroundColor:'#f7f7f7'}} id="map3">
@@ -675,7 +724,7 @@ mapContainer.current.on(L.Draw.Event.CREATED, function(e) {
   </div>
   <div className="col-sm-4">
   <div className="form-group form-select-sm" style={{textAlign:'left'}}>
-      <label htmlFor="exampleInputEmail1">Project</label> <span style={{ color: 'red' }}>*</span>
+      <label htmlFor="exampleInputEmail1">Project</label>
       <select  className="form-select form-select-sm"  id="exampleInputEmail2" aria-label=".form-select-sm example"
               disabled={false}
               value={project}
@@ -708,11 +757,7 @@ mapContainer.current.on(L.Draw.Event.CREATED, function(e) {
           blurInputOnSelect={true}
           closeMenuOnSelect={false}
           selectionLimit={1}
-          onRemove={(event) => {
-            console.log(event);
-          }}
           onSelect={(event) => {
-         //   console.log()
             setParameter(event);
           }}
           options={parameterlist}
@@ -786,16 +831,16 @@ mapContainer.current.on(L.Draw.Event.CREATED, function(e) {
       </div>
       </div>
       <div className="row" style={{marginTop:'0px'}}>
-      <div className="col-sm-4">
+      <div className="col-sm-3">
       <div className="form-group form-select-sm" style={{textAlign:'left'}}>
       <input className="form-check-input" type="checkbox" id="fj_ezz" name="fj_ezz" onChange={handleClick} defaultChecked={checked} />&nbsp;
   <label className="form-check-label">Activate Search by Extent</label>
         </div>
         </div>
-        <div className="col-sm-8">
+        <div className="col-sm-9">
         {checked ?
         <div className="form-group form-select-sm" style={{textAlign:'left'}}>
-    <input type="email" className="form-control form-select-sm" id="exampleInputEmail3" aria-describedby="emailHelp" placeholder="Draw polygon on map" disabled value={extent}/>
+    <input type="email" className="form-control form-select-sm" id="exampleInputEmail3" aria-describedby="emailHelp" placeholder="Draw polygon on map" disabled value={extentref.current}/>
     </div>
     :null}
     </div>
@@ -923,6 +968,23 @@ mapContainer.current.on(L.Draw.Event.CREATED, function(e) {
             Update
           </Button>
           <Button variant="secondary" onClick={handleinfo2}>
+            Close
+          </Button>
+         
+        </Modal.Footer>
+      </Modal>
+      <Modal show={infoshow22} onHide={handleinfo22} size="lg" centered={true} >
+  <Modal.Header className={css} >
+      {header}
+    </Modal.Header>
+      
+        <Modal.Body>
+          <div>
+          {message}
+         </div>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleinfo22}>
             Close
           </Button>
          

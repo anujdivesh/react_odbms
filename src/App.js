@@ -19,19 +19,22 @@ import Login from './pages/login';
 import Signup from './pages/signup';
 import AuthService from "./services/auth.service";
 import EventBus from "./common/EventBus";
+import Cookies from 'js-cookie';
 
 function App() {
 
-  const [showModeratorBoard, setShowModeratorBoard] = useState(false);
   const [showAdminBoard, setShowAdminBoard] = useState(false);
   const [currentUser, setCurrentUser] = useState(undefined);
+  const [username, setUsername] = useState(undefined);
 
   useEffect(() => {
-    const user = AuthService.getCurrentUser();
-
+    //const user = AuthService.getCurrentUser();
+    const user = AuthService.getCurrentUserCookie();
     if (user) {
       setCurrentUser(user);
-      setShowModeratorBoard(user.roles.includes("ROLE_MODERATOR"));
+      var tempemail = user.email
+      var split = tempemail.split('@');
+      setUsername(split[0])
       setShowAdminBoard(user.roles.includes("ROLE_ADMINEYJHBGCIOIJIUZI1NIISINR5CCI6IKPXVCJ9EYJLBWFPBCI6IM"));
     }
 
@@ -46,7 +49,6 @@ function App() {
 
   const logOut = () => {
     AuthService.logout();
-    setShowModeratorBoard(false);
     setShowAdminBoard(false);
     setCurrentUser(undefined);
     
@@ -58,7 +60,7 @@ function App() {
       <Router>
             <div>
         <Navbar expand="lg" bg={"navbar navbar-expand-sm navbar-custom"} variant={"dark"} style={{paddingRight:"1%",paddingLeft:"1%"}}>
-       
+        
         <Navbar.Brand as={Link} to={"/oceandata"}>
           
           Ocean Data Explorer</Navbar.Brand>
@@ -75,7 +77,7 @@ function App() {
           </Nav>
           {currentUser ? (
              <Form inline="true">
-             <Button variant="warning" className="mr-sm-4" as={Link} to={"/oceandata/login"} onClick={logOut}>Logout</Button>
+             <Button variant="warning" className="mr-sm-4" as={Link} to={"/oceandata/login"} onClick={logOut}>{username}:Logout</Button>
            </Form>
          
         ) : (

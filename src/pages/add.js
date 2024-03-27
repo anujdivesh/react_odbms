@@ -43,6 +43,14 @@ const Add = () => {
   const handleinfo2 = () => {
     setinfoshow2(false)
   };
+  const [message, setMessage] = useState('');
+  const [css, setCss] = useState('btn btn-warning');
+  const [header, setHeader] = useState('Success');
+
+  const [infoshow22, setinfoshow22] = useState(false);
+  const handleinfo22 = () => {
+    setinfoshow22(false)
+  };
 
 
     const [bbox, setbbox] = useState("grid");
@@ -73,7 +81,7 @@ const Add = () => {
     const [description, setDescription] = useState('');
     const [path, setPath] = useState('/home/anuj/Desktop/angular/crews/filename.las');
     const [restricted, setRestricted] = useState(true);
-    const [token, setToken] = useState('');
+    const [token, setToken] = useState(null);
     const [extent, setExtent] = useState();
     const handleTitle = event => {
       setTitle(event.target.value);
@@ -243,13 +251,13 @@ const Add = () => {
   
   
       useEffect(() => {  
-        const user = AuthService.getCurrentUser();
-        console.log(user)
-        if (user == null){
+        const user = AuthService.getCurrentUserCookie();
+        if (user === null || user === undefined){
           console.log('not logged in')
           setUnauthorized(true);
         }
         else{
+          setToken(user.accessToken)
           setUnauthorized(false);
         fetchOrganizations();
         fetchdatatype();
@@ -319,27 +327,35 @@ const Add = () => {
       }
    //   console.log(extent_arr)
         
-        const login = {username:"admin", password:'3fZd6x68FqDgi88cyN8P!'};
-        const metadata = { title: title, description: description, version:"1.0.0", temporal_coverage_from: formatDate(startDate), temporal_coverage_to: formatDate(endDate), data_type: datatype, project_id: project,
+       const metadata = { title: title, description: description, version:"1.0.0", temporal_coverage_from: formatDate(startDate), temporal_coverage_to: formatDate(endDate), data_type: datatype, project_id: project,
           publisher_id:publisher, contact_id: contact, tag:getkeyArray(tag), country:[country],parameters: getkeyArray(parameter),extents:extent_arr, is_checked:true, is_restricted:restricted, topic: getkeyArray(topic), 
           urls:arr_urls,flag: getkeyArray(flag), user_created_id:contact};
           console.log(metadata)
-          //const metadata = { title: title, description: description, temportal_coverage_from: formatDate(startDate), temportal_coverage_to: formatDate(endDate), data_type: datatype };
-          console.log(metadata)
-        axios.post('https://opmdata.gem.spc.int/api/auth/signin', login)
-          .then(response => {
-            const access = response.data.accessToken;
-            const header = {
-              'Content-Type': 'application/json',
-              'x-access-token': access
-            }
-    
+          const header = {
+            'Content-Type': 'application/json',
+            'x-access-token': token
+          }
             axios.post('https://opmdata.gem.spc.int/api/metadata/add', metadata, {headers:header})
               .then(response2 => {
-                console.log(response2.data.message)
-            });
-  
+                var temptext = response2.data.message;
+                let result = temptext.includes("Exists!");
+                if (!result){
+                  setCss('btn btn-success')
+                  setHeader('Success')
+                }
+                else{
+                setCss('btn btn-warning')
+                setHeader('Warning')
+                }
+                setMessage(response2.data.message)
+                setinfoshow22(true)
+            }).catch((error) => {
+              setCss('btn btn-danger')
+              setHeader('Error')
+              setMessage('Opps! An Error Occurred. Please contact Administrator.')
+              setinfoshow22(true)
           });
+  
           
        
       // const formattedDateTime = startDate.toISOString();
@@ -427,7 +443,7 @@ const Add = () => {
               onChange={(e) => {
                 setDatatype(e.currentTarget.value)
                 if (e.target.value === "6"){
-                  setExtent("x=value, y=value")
+                  setExtent("xmin=value, ymin=value, xmax=value, ymax=value")
                 }
                 else{
                   setExtent("xmin=value, ymin=value, xmax=value, ymax=value")
@@ -638,6 +654,23 @@ const Add = () => {
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={handleinfo2}>
+            Close
+          </Button>
+         
+        </Modal.Footer>
+      </Modal>
+      <Modal show={infoshow22} onHide={handleinfo22} size="lg" centered={true} >
+  <Modal.Header className={css} >
+      {header}
+    </Modal.Header>
+      
+        <Modal.Body>
+          <div>
+          {message}
+         </div>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleinfo22}>
             Close
           </Button>
          

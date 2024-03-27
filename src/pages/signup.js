@@ -4,7 +4,7 @@ import axios from "axios";
 import { Form, Button, Alert } from "react-bootstrap";
 import "../css/signup.css";
 import AuthService from "../services/auth.service";
-import BackgroundImage from "../assets/images/oceanpic3.jpg";
+import BackgroundImage from "../assets/images/oceanpic2.jpg";
 import Logo from "../assets/images/spclogo.png";
 
 

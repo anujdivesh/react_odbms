@@ -1,4 +1,5 @@
 import axios from "axios";
+import Cookies from 'js-cookie';
 
 const API_URL = "https://opmdata.gem.spc.int/api/auth/";
 
@@ -21,7 +22,10 @@ const login = (email, password) => {
     })
     .then((response) => {
       if (response.data.accessToken) {
-        localStorage.setItem("user", JSON.stringify(response.data));
+     //   localStorage.setItem("user", JSON.stringify(response.data));
+        var inFifteenMinutes = new Date(new Date().getTime() + 30 * 60 * 1000);
+        Cookies.set('user', JSON.stringify(response.data), { expires: inFifteenMinutes });
+       // Cookies.set('user', JSON.stringify(response.data), { expires: 0.5 });
       }
 
       return response.data;
@@ -40,19 +44,29 @@ const forgot_password = (email) => {
 
 
 const logout = () => {
-  localStorage.removeItem("user");
+  Cookies.remove('user');
 };
 
 const getCurrentUser = () => {
   return JSON.parse(localStorage.getItem("user"));
 };
+const getCurrentUserCookie = () => {
+  var cook = Cookies.get('user');
+  if (cook !== undefined){
+    cook = JSON.parse(Cookies.get('user'))
+  }
+ // var cook = JSON.parse(Cookies.get('user'))
+  return cook;
+};
+
 
 const AuthService = {
   register,
   login,
   logout,
   getCurrentUser,
-  forgot_password
+  forgot_password,
+  getCurrentUserCookie
 };
 
 export default AuthService;

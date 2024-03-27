@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Form, Button, Alert } from "react-bootstrap";
 import "../css/login.css";
 import AuthService from "../services/auth.service";
-import BackgroundImage from "../assets/images/oceanpic3.jpg";
+import BackgroundImage from "../assets/images/oceanpic2.jpg";
 import Logo from "../assets/images/spclogo.png";
 
 const Login = () => {

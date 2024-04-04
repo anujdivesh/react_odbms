@@ -20,6 +20,9 @@ import AuthService from "../services/auth.service";
 const Home = () => {
 
   //VARIABLES
+  const markersLayer = useRef(null);
+  const mapContainermain = useRef(null);
+  const baseLayermain = useRef();
   var JSONPrettyMon = require('react-json-pretty/dist/monikai');
   const [unauthorized, setUnauthorized] = useState(false);
   const [infoshow, setinfoshow] = useState(false);
@@ -33,6 +36,7 @@ const Home = () => {
   const [infotext2, setinfotext2] = useState(false);
   const infotext2Ref = useRef(false);
   const layer = useRef(null);
+  const layer2 = useRef(null);
   const mapContainer = useRef(null);
   const baseLayer = useRef();
   const _isMounted = useRef(true);
@@ -136,6 +140,14 @@ const Home = () => {
     }
   const getPlayerData = async (e) => {
       try{
+        layer2.current = null;
+        mapContainermain.current.eachLayer(function (layer) {
+          const layername = layer.options.id;
+          if(layername === 8){
+            mapContainermain.current.removeLayer(layer);
+          }
+          
+        });
         if (checked){
           if (datatyperef.current == "%"){
             setCss('btn btn-warning')
@@ -157,7 +169,8 @@ const Home = () => {
           for (var i=0; i<data2.data.length; i++){
               let temp = [];
               var countryx = data2.data[i].countries[0].country_name;
-              var titlex = data2.data[i].title;
+              var desc = data2.data[i].title;
+              var titlex = data2.data[i].description;
               var datatypex = data2.data[i].data_type.datatype_code;
               var projectx = data2.data[i].project.project_code;
               var is_restrictedx = data2.data[i].is_restricted;
@@ -166,6 +179,7 @@ const Home = () => {
               temp.push({
                   "id":counter,
                   "idx":data2.data[i].id,
+                  "desc":desc,
                   "title":titlex,
                   "datatype":datatypex,
                   "country":countryx.toString(),
@@ -201,21 +215,70 @@ const Home = () => {
               project:projectref.current
           
           }
-
+          /*
+          const params = {
+            title:'%',
+            datatype_id:'%',
+            country:'%',
+            parameters:'%',
+            tag:'%',
+            topic:'%',
+            project:'%'
+        
+        }
+        console.log(params)
+        */var marker, test;
           const data2 = await axios.post("https://opmdata.gem.spc.int/api/metadata/findByMultipleParam", params);
           let counter = 1;
+          var polygon = [];
           for (var b=0; b<data2.data.length; b++){
               let temp = [];
               var country = data2.data[b].countries[0].country_name;
-              var title = data2.data[b].title;
+              var desc = data2.data[b].title;
+              var title = data2.data[b].description;
               var datatype = data2.data[b].data_type.datatype_code;
               var project = data2.data[b].project.project_code;
               var is_restricted = data2.data[b].is_restricted;
               var email = data2.data[b].contact.email;
               var version = data2.data[b].version;
+              var dtatype = data2.data[b].data_type.id;
+              var extents = data2.data[b].spatial_extents;
+
+              var coord_marker = [];
+              var coordbbox = [];
+              if (dtatype === 6){
+                coord_marker.push(loopToGetCoord(extents,"ymin"))
+                coord_marker.push(loopToGetCoord(extents,"xmin"))
+              var test = data2.data[b].id;
+              
+              marker = L.marker(coord_marker,{icon:redIcon,id:8}).addTo(markersLayer.current).bindPopup(desc,{
+                maxWidth: "auto"
+            })
+              marker.test = test;
+              //layer2.current = L.marker(coord_marker,{icon:redIcon,id:idxx}).on('click', function(e) {console.log(e)});
+              //layer2.current.addTo(mapContainermain.current);
+              }
+              else{
+                var tmp = []
+                tmp.push(loopToGetCoord(extents,"ymin"))
+                tmp.push(loopToGetCoord(extents,"xmin"))
+                coordbbox.push(tmp)
+                tmp = [];
+                tmp.push(loopToGetCoord(extents,"ymax"))
+                tmp.push(loopToGetCoord(extents,"xmax"))
+                coordbbox.push(tmp)
+                var test = data2.data[b].id;
+                marker = L.rectangle(coordbbox, {id:8,color: '#FF5733', weight: 3}).addTo(markersLayer.current).bindPopup(desc,{
+                  maxWidth: "auto"
+              })
+                marker.test = test;
+              }
+              
+
               temp.push({
                   "id":counter,
                   "idx":data2.data[b].id,
+                  "desc":desc,
                   "title":title,
                   "datatype":datatype,
                   "country":country.toString(),
@@ -225,8 +288,10 @@ const Home = () => {
                   "version":version
               })
               counter = counter + 1;
+              polygon.push(temp)
               setobsSource(prevData =>[...prevData, ...temp]);
           }
+          console.log(polygon)
 
           setLoading(true)
         }
@@ -335,7 +400,8 @@ const Home = () => {
   };
   const columns = [
       {dataField: "id", text:"ID",style:{fontSize:'13px', padding:'1px'},headerStyle: { backgroundColor: '#215E95', color: 'white'}},
-      {dataField: "title", text:"Title",style:{fontSize:'13px', padding:'1px'},headerStyle: { backgroundColor: '#215E95', color: 'white'}},
+      {dataField: "desc", text:"Title",style:{fontSize:'13px', padding:'1px'},headerStyle: { backgroundColor: '#215E95', color: 'white'}},
+      {dataField: "title", text:"Description",style:{fontSize:'13px', padding:'1px'},headerStyle: { backgroundColor: '#215E95', color: 'white'}},
       {dataField: "datatype", text:"Data Type",style:{fontSize:'13px', padding:'1px'},headerStyle: { backgroundColor: '#215E95', color: 'white'}},
       {dataField: "country", text:"Country",style:{fontSize:'13px', padding:'1px'},headerStyle: { backgroundColor: '#215E95', color: 'white'}},
       {dataField: "project", text:"Project",style:{fontSize:'13px', padding:'1px'},headerStyle: { backgroundColor: '#215E95', color: 'white'}},
@@ -353,7 +419,7 @@ const Home = () => {
     }
   }
 
-  function addMarker(map, markercoord) {
+  function addMarker(map, markercoord, id) {
   
     const redIcon = new L.Icon({
       iconUrl:
@@ -366,11 +432,27 @@ const Home = () => {
       shadowSize: [41, 41]
     });
 
-    var layer = L.marker(markercoord,{icon:redIcon,id:999}).addTo(map);//.openPopup();
+    var layer = L.marker(markercoord,{icon:redIcon,id:id}).addTo(map);//.openPopup();
     map.flyTo(markercoord, 12);
     return layer;
   
   
+  }
+
+  const redIcon = new L.Icon({
+    iconUrl:
+      "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png",
+    shadowUrl:
+      "https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png",
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+  });
+
+  function fitbbox(map, bbox){
+    map.fitBounds(bbox);
+    return map;
   }
 
   function addBBox(map, bbox) {
@@ -383,9 +465,10 @@ const Home = () => {
   }
   
   const getOneData = async (row) => {
+    console.log('anuj',row)
     setLoading(false)
     
-    const data2 = await axios.get("https://opmdata.gem.spc.int/api/metadata/id/"+row.idx);
+    const data2 = await axios.get("https://opmdata.gem.spc.int/api/metadata/id/"+row);
     
     countryFlagRef.current =  require('../flags/'+data2.data[0].countries[0].country_code+'.png')
 
@@ -398,17 +481,6 @@ const Home = () => {
     else{
       isMarkerRef.current = false
     }
-    //console.log(dtatype, isMarkerRef.current)
-    /*
-    for (var i =0; i<extents.length; i++){
-      if(extents[i].extent_name === 'x'){
-        isMarkerRef.current = true;
-        break;
-      }
-      else{
-        isMarkerRef.current = false
-      }
-    }*/
     var coord_marker = [];
     var coordbbox = [];
     if (isMarkerRef.current){
@@ -555,7 +627,7 @@ const Home = () => {
                    cursor: "pointer",
                   lineHeight: "normal" }}>
                       
-              <MdOutlinePageview  style={{width:"23px",height:"23px"}} onClick={() => {getOneData(row)}}/> &nbsp;<FaEdit style={{width:"18px",height:"18px",paddingBottom:'2px' }} onClick={() => {editData(row)}}/>
+              <MdOutlinePageview  style={{width:"23px",height:"23px"}} onClick={() => {getOneData(row.idx)}}/> &nbsp;<FaEdit style={{width:"18px",height:"18px",paddingBottom:'2px' }} onClick={() => {editData(row)}}/>
        </div> 
   ); } 
 
@@ -574,7 +646,70 @@ const options = {
   custom: true,
   totalSize: obsSource.length
 };
+function initialize(){
+    
+  baseLayermain.current = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+      attribution: '&copy; Pacific Community (OSM)',
+      detectRetina: true
+  });
+  //console.log('Home Rendered!!');
+  mapContainermain.current = null;
+  mapContainermain.current = L.map('mapidmain', {
+      zoom: 3,
+      center: [0.878032, 185.843298]
+    });
+    
+    baseLayermain.current.addTo(mapContainermain.current); 
 
+    var m_drawn_features = new L.FeatureGroup();
+    mapContainermain.current.addLayer(m_drawn_features);
+
+   let draw_control = new L.Control.Draw({
+    position: 'topleft',
+    draw: {
+        polyline: false,
+        polygon: false,
+        circle: false,
+        rectangle: true,
+        circlemarker: false,
+        marker: false,
+    },
+    edit: {
+      featureGroup: m_drawn_features, //REQUIRED!!
+      remove: true
+  }
+});
+
+mapContainermain.current.addControl(draw_control);
+
+mapContainermain.current.on(L.Draw.Event.CREATED, function(e) {
+  // Remove all layers (only show one location at a time)
+  m_drawn_features.clearLayers();
+
+  // Add layer with the new features
+  let new_features_layer = e.layer;
+  m_drawn_features.addLayer(new_features_layer);
+
+
+ // let new_features_layer = e.layer;
+    var extent_def = new_features_layer._bounds._northEast.lat+","+new_features_layer._bounds._southWest.lat+","+new_features_layer._bounds._northEast.lng+","+new_features_layer._bounds._southWest.lng;
+    var minx = new_features_layer._bounds._southWest.lng;
+    var maxx = new_features_layer._bounds._northEast.lng;
+    var miny = new_features_layer._bounds._southWest.lat;
+    var maxy = new_features_layer._bounds._northEast.lat;
+  setExtent(extent_def);
+  extentref.current = "minx="+minx+" maxx="+maxx+" miny="+miny+" maxy="+maxy;
+
+});
+
+
+markersLayer.current = L.featureGroup().addTo(mapContainermain.current).on("click", groupClick);
+fitbbox(mapContainermain.current, [[-20.6705078125, -180.0], [-16.1260742188, -178.251123047]])
+  }
+  function groupClick(event) {
+   // console.log("Clicked on marker " + event.layer.test);
+    getOneData(event.layer.test)
+  }
 
   function initMap(isMarker, markercoord, bbox){
     
@@ -592,11 +727,14 @@ const options = {
         baseLayer.current.addTo(mapContainer.current); 
 
         if (isMarker){
-        layer.current = addMarker(mapContainer.current,markercoord);
+        layer.current = addMarker(mapContainer.current,markercoord,999);
         }
         else{
+         // console.log(bbox)
           layer.current = addBBox(mapContainer.current, bbox)
         }
+
+        //MAIN MAPPING
         
      // }
 
@@ -646,6 +784,7 @@ mapContainer.current.on(L.Draw.Event.CREATED, function(e) {
   useEffect(() => {  
 
       if (_isMounted.current){
+        initialize();
         const user = AuthService.getCurrentUserCookie();
         if (user === null || user === undefined){
           setUnauthorized(true);
@@ -861,32 +1000,7 @@ mapContainer.current.on(L.Draw.Event.CREATED, function(e) {
       <br/>
  </div>
  <div className="col-sm-6" id="map"  style={{padding:'0', marginRight:'0%'}}>
- <MapContainer center={[0.878032, 185.843298]} zoom={3} scrollWheelZoom={true} >
-  <TileLayer
-    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-    url="https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"
-  />
-
-   <FeatureGroup>
-    <EditControl
-      position='topleft'
-      onEdited={_onEdited}
-      onCreated={_onCreated}
-      onDeleted={_onDeleted}
-      edit={{
-        edit: false
-      }}
-      draw={{
-        rectangle: true,
-        polygon: false,
-        circle: false,
-        marker: false,
-        polyline: false,
-        circlemarker: false
-      }}
-    />
-  </FeatureGroup>
-</MapContainer>
+ <div id="mapidmain" style={{ height: '100%', width: '100%' }}></div>
 
   </div>
  </div>
@@ -923,9 +1037,11 @@ mapContainer.current.on(L.Draw.Event.CREATED, function(e) {
         ):(
             <ReactBootStrap.Spinner animation="border" variant="primary"/>
         )}
+        </div>
+        
+        </div>
 
-        </div>
-        </div>
+<br/>
           </div>
       </main>
       <Modal show={infoshow} onHide={handleinfo} size="lg">
@@ -985,6 +1101,25 @@ mapContainer.current.on(L.Draw.Event.CREATED, function(e) {
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={handleinfo22}>
+            Close
+          </Button>
+         
+        </Modal.Footer>
+      </Modal>
+      <Modal size="lg" centered={true} >
+  <Modal.Header >
+      Fake model
+    </Modal.Header>
+      
+        <Modal.Body>
+          <div>
+          <MapContainer center={[0.878032, 185.843298]} zoom={3} scrollWheelZoom={true} >
+
+</MapContainer>
+         </div>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary">
             Close
           </Button>
          

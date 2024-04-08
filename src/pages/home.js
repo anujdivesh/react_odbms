@@ -17,6 +17,7 @@ import 'leaflet/dist/leaflet.css'; // Import Leaflet CSS
 import 'leaflet-draw/dist/leaflet.draw.css'; // Import Leaflet Draw CSS
 import AuthService from "../services/auth.service";
 import {mayFlyer} from './helper';
+import 'leaflet-providers';
 
 const Home = () => {
 
@@ -676,7 +677,7 @@ const options = {
 };
 function initialize(){
     
-  baseLayermain.current = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+  baseLayermain.current = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; Pacific Community (OSM)',
       detectRetina: true
   });
@@ -799,7 +800,7 @@ markersLayer.current = L.featureGroup().addTo(mapContainermain.current).on("clic
 
   function initMap(isMarker, markercoord, bbox){
     
-      baseLayer.current = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+      baseLayer.current = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           attribution: '&copy; Pacific Community (OSM)',
           detectRetina: true
       });

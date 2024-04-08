@@ -16,6 +16,7 @@ import 'leaflet-draw';
 import 'leaflet/dist/leaflet.css'; // Import Leaflet CSS
 import 'leaflet-draw/dist/leaflet.draw.css'; // Import Leaflet Draw CSS
 import AuthService from "../services/auth.service";
+import {mayFlyer} from './helper';
 
 const Home = () => {
 
@@ -69,6 +70,29 @@ const Home = () => {
   const [topiclist,setTopiclist] = useState([]);
   const [checked, setChecked] = React.useState(false);
   const [token, setToken] = React.useState(null);
+
+  function hasDuplicates(array) {
+    return new Set(array).size !== array.length;
+  }
+
+  function countEachDuplicate(array) {
+    const counts = {};
+    const duplicates = {};
+  
+    array.forEach(item => {
+      counts[item] = (counts[item] || 0) + 1;
+    });
+  
+    for (const [item, count] of Object.entries(counts)) {
+      if (count > 1) {
+        // Subtract 1 so we count duplicates only, not the original
+        duplicates[item] = count - 1;
+      }
+    }
+  
+    return duplicates;
+  }
+  
 
   const handleinfo = () => {
     setinfoshow(false)
@@ -255,6 +279,7 @@ const Home = () => {
                 maxWidth: "auto"
             })
               marker.test = test;
+              marker.type = datatype;
               //layer2.current = L.marker(coord_marker,{icon:redIcon,id:idxx}).on('click', function(e) {console.log(e)});
               //layer2.current.addTo(mapContainermain.current);
               }
@@ -272,6 +297,7 @@ const Home = () => {
                   maxWidth: "auto"
               })
                 marker.test = test;
+                marker.type = datatype;
               }
               
 
@@ -291,7 +317,9 @@ const Home = () => {
               polygon.push(temp)
               setobsSource(prevData =>[...prevData, ...temp]);
           }
-          console.log(polygon)
+
+          fitbbox(mapContainermain.current, mayFlyer(countryref.current))
+          //console.log(polygon)
 
           setLoading(true)
         }
@@ -465,7 +493,7 @@ const Home = () => {
   }
   
   const getOneData = async (row) => {
-    console.log('anuj',row)
+  //  console.log('anuj',row)
     setLoading(false)
     
     const data2 = await axios.get("https://opmdata.gem.spc.int/api/metadata/id/"+row);
@@ -699,16 +727,74 @@ mapContainermain.current.on(L.Draw.Event.CREATED, function(e) {
     var maxy = new_features_layer._bounds._northEast.lat;
   setExtent(extent_def);
   extentref.current = "minx="+minx+" maxx="+maxx+" miny="+miny+" maxy="+maxy;
+  
 
 });
 
 
 markersLayer.current = L.featureGroup().addTo(mapContainermain.current).on("click", groupClick);
-fitbbox(mapContainermain.current, [[-20.6705078125, -180.0], [-16.1260742188, -178.251123047]])
   }
   function groupClick(event) {
-   // console.log("Clicked on marker " + event.layer.test);
+   // console.log(markersLayer.current._layers['57']._bounds);
+    //console.log(markersLayer.current._layers['60']._bounds);
+    if (datatyperef.current !== 'insitu'){
+    var obj = markersLayer.current._layers;
+    var result = Object.keys(obj).map((key) => [key, obj[key]]);
+    var xmin_arr = [];
+    var ymin_arr =[];
+    var xmax_arr =[];
+    var ymax_arr = [];
+    for (var a=0; a<result.length; a++){
+      xmin_arr.push(result[a][1]._bounds._southWest.lat)
+      ymin_arr.push(result[a][1]._bounds._southWest.lng)
+      xmax_arr.push(result[a][1]._bounds._northEast.lat)
+      ymax_arr.push(result[a][1]._bounds._northEast.lng)
+    }
+    var xmin_bool= hasDuplicates(xmin_arr);
+    var ymin_bool= hasDuplicates(xmax_arr);
+    var xmax_bool= hasDuplicates(ymin_arr);
+    var ymax_bool= hasDuplicates(ymax_arr);
+    var check_boll_arr = [];
+    check_boll_arr.push(hasDuplicates(xmin_arr))
+    check_boll_arr.push(hasDuplicates(xmax_arr))
+    check_boll_arr.push(hasDuplicates(ymin_arr))
+    check_boll_arr.push(hasDuplicates(ymin_arr))
+    var counter = countEachDuplicate(check_boll_arr)
+    if (parseInt(counter.true) >= 3){
+      setCss('btn btn-warning')
+      setHeader('Warning')
+      setMessage("Some layers maybe intersecting, please use the table below to view metadata.")
+      setinfoshow22(true)
+    }
+    else{
+      getOneData(event.layer.test)
+    }
+  }
+  else{
     getOneData(event.layer.test)
+  }
+    
+ //     console.log(xmin_bool, ymin_bool, xmax_bool, ymax_bool)
+  //  console.log(json_obj)
+
+    /*
+    var first_layer = markersLayer.current._layers['57']._bounds;
+    var second_layer = markersLayer.current._layers['60']._bounds;
+    console.log(event.layer.type)
+    if (event.layer.type !== 'insitu'){
+    if (JSON.stringify(first_layer) === JSON.stringify(second_layer)){
+      setCss('btn btn-warning')
+            setHeader('Warning')
+            setMessage("Some layers maybe overlapping, please use the table below to view metadata.")
+            setinfoshow22(true)
+    }
+    else{
+    getOneData(event.layer.test)
+    }
+  }
+  else{
+    getOneData(event.layer.test)
+  }*/
   }
 
   function initMap(isMarker, markercoord, bbox){

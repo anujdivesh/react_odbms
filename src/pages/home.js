@@ -18,6 +18,7 @@ import 'leaflet-draw/dist/leaflet.draw.css'; // Import Leaflet Draw CSS
 import AuthService from "../services/auth.service";
 import {mayFlyer} from './helper';
 import 'leaflet-providers';
+import "leaflet-bing-layer";
 
 const Home = () => {
 
@@ -65,9 +66,9 @@ const Home = () => {
   const [datatypelist,setDatatypelist] = useState([]);
   const [project, setProject]  = useState('');
   const [projectlist,setProjectlist] = useState([]);
-  const [tag, setTag]  = useState([{key:'Oceanography',label:"Oceanography"}]);
+  const [tag, setTag]  = useState([{key:'%',label:"%"}]);
   const [taglist,setTaglist] = useState([]);
-  const [topic, setTopic]  = useState([{key:'Geoscience',label:"Geoscience"}]);
+  const [topic, setTopic]  = useState([{key:'%',label:"%"}]);
   const [topiclist,setTopiclist] = useState([]);
   const [checked, setChecked] = React.useState(false);
   const [token, setToken] = React.useState(null);
@@ -165,6 +166,9 @@ const Home = () => {
     }
   const getPlayerData = async (e) => {
       try{
+        if (markersLayer.current != null){
+        markersLayer.current =  L.featureGroup().addTo(mapContainermain.current).on("click", groupClick);
+        }
         layer2.current = null;
         mapContainermain.current.eachLayer(function (layer) {
           const layername = layer.options.id;
@@ -230,6 +234,7 @@ const Home = () => {
           else{
           setLoading(false)
           setobsSource([])
+          console.log(parameter, tag,topic)
           const params = {
               title:titleref.current,
               datatype_id:datatyperef.current,
@@ -240,6 +245,7 @@ const Home = () => {
               project:projectref.current
           
           }
+          console.log(params)
           /*
           const params = {
             title:'%',
@@ -751,6 +757,7 @@ markersLayer.current = L.featureGroup().addTo(mapContainermain.current).on("clic
       xmax_arr.push(result[a][1]._bounds._northEast.lat)
       ymax_arr.push(result[a][1]._bounds._northEast.lng)
     }
+    console.log(xmin_arr, ymin_arr, xmax_arr, ymax_arr)
     var xmin_bool= hasDuplicates(xmin_arr);
     var ymin_bool= hasDuplicates(xmax_arr);
     var xmax_bool= hasDuplicates(ymin_arr);
@@ -761,6 +768,7 @@ markersLayer.current = L.featureGroup().addTo(mapContainermain.current).on("clic
     check_boll_arr.push(hasDuplicates(ymin_arr))
     check_boll_arr.push(hasDuplicates(ymin_arr))
     var counter = countEachDuplicate(check_boll_arr)
+    console.log(result)
     if (parseInt(counter.true) >= 3){
       setCss('btn btn-warning')
       setHeader('Warning')
@@ -800,10 +808,19 @@ markersLayer.current = L.featureGroup().addTo(mapContainermain.current).on("clic
 
   function initMap(isMarker, markercoord, bbox){
     
+    const BING_KEY = 'AnIOo4KUJfXXnHB2Sjk8T_zV-tI7FkXplU1efiiyTYrlogDKppodCvsY7-uhRe8P'
+   
+    baseLayer.current = L.tileLayer.bing(BING_KEY, {
+      //  maxZoom: 5,
+        attribution:
+        '&copy; Pacific Community (OSM)',
+        detectRetina: true,
+      });
+/*
       baseLayer.current = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           attribution: '&copy; Pacific Community (OSM)',
           detectRetina: true
-      });
+      });*/
       //console.log('Home Rendered!!');
       mapContainer.current = null;
         mapContainer.current = L.map('mapId', {
@@ -986,6 +1003,9 @@ mapContainer.current.on(L.Draw.Event.CREATED, function(e) {
           onSelect={(event) => {
             setParameter(event);
           }}
+          onRemove={(event) => {
+            setParameter([{key:'%',label:"%"}]);
+          }}
           options={parameterlist}
           showCheckbox
           avoidHighlightFirstOption
@@ -1001,7 +1021,7 @@ mapContainer.current.on(L.Draw.Event.CREATED, function(e) {
           isObject={true}
           closeMenuOnSelect={false}
           onRemove={(event) => {
-            setTag(event);
+            setTag([{key:'%',label:"%"}]);
           }}
           onSelect={(event) => {
             setTag(event);
@@ -1024,7 +1044,7 @@ mapContainer.current.on(L.Draw.Event.CREATED, function(e) {
           displayValue="label"
           isObject={true}
           onRemove={(event) => {
-            setTopic(event);
+            setTopic([{key:'%',label:"%"}])
           }}
           onSelect={(event) => {
             setTopic(event);

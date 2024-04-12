@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from "react";
+import React, {useEffect, useState} from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import axios from "axios";
@@ -52,18 +52,14 @@ const Add = () => {
     setinfoshow22(false)
   };
 
-
-    const [bbox, setbbox] = useState("grid");
     const [startDate, setStartDate] = useState();
     
     const [endDate, setEndDate] = useState();
     const [publisher, setPublisher]  = useState('1');
-    const [organizationlist,setOrganizationList] = useState([]);
     const [datatype, setDatatype]  = useState();
     const [datatypelist,setDatatypelist] = useState([]);
     const [country, setCountry]  = useState();
     const [countrylist,setCountrylist] = useState([]);
-    const [organization, setOrganization]  = useState('1');
     const [project, setProject]  = useState('1');
     const [projectlist,setProjectlist] = useState([]);
     const [contact, setContact]  = useState('1');
@@ -79,7 +75,6 @@ const Add = () => {
     const [currentTime, setCurrentTime] = useState(new Date());
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
-    const [path, setPath] = useState('/home/anuj/Desktop/angular/crews/filename.las');
     const [restricted, setRestricted] = useState(true);
     const [token, setToken] = useState(null);
     const [extent, setExtent] = useState();
@@ -89,27 +84,10 @@ const Add = () => {
     const handleDescription = event => {
       setDescription(event.target.value);
     };
-    const handlePath = event => {
-      setPath(event.target.value);
-    };
     const handeleExtent = e=>{
       setExtent(e.target.value)
     }
   
-    const fetchOrganizations = () => {
-        axios
-          .get('https://opmdata.gem.spc.int/api/organizations')
-          .then((response) => {
-            const { data } = response;
-            if(response.status === 200){
-                //check the api call is success by stats code 200,201 ...etc
-                setOrganizationList(data)
-            }else{
-                //error handle section 
-            }
-          })
-          .catch((error) => console.log(error));
-    };
     const fetchdatatype = () => {
       axios
         .get('https://opmdata.gem.spc.int/api/datatypes')
@@ -239,27 +217,15 @@ const Add = () => {
         .catch((error) => console.log(error));
     };
   
-    function onChangeValue(event) {
-      setbbox(event.target.value);
-      console.log(event.target.value);
-    }
-  
-    const optionsArray = [
-      { key: "au", label: "Australia" }
-    ];
-  
-  
-  
       useEffect(() => {  
         const user = AuthService.getCurrentUserCookie();
         if (user === null || user === undefined){
-          console.log('not logged in')
           setUnauthorized(true);
         }
         else{
           setToken(user.accessToken)
           setUnauthorized(false);
-        fetchOrganizations();
+        //fetchOrganizations();
         fetchdatatype();
         fetchcountry();
         fetchproject();
@@ -321,8 +287,8 @@ const Add = () => {
         }
         var extent_arr = [];
         var splitted = extent.split(', ');
-        for (var i=0; i<splitted.length; i++){
-          var split2 = splitted[i].split('=')
+        for (var k=0; k<splitted.length; k++){
+          var split2 = splitted[k].split('=')
           extent_arr.push({"name":split2[0],"value":split2[1]})
       }
    //   console.log(extent_arr)
@@ -541,7 +507,7 @@ const Add = () => {
                           <th scope="col" style={{backgroundColor: "#0096FB ", color:'#FFFF', fontWeight:'normal'}}>Data Store <span style={{ color: 'red' }}>*</span></th>
                           <th scope="col" style={{backgroundColor: "#0096FB ", color:'#FFFF', fontWeight:'normal'}}>URL Path <span style={{ color: 'red' }}>*</span></th>
                           <th scope="col">
-                            <img src={addimage} style={{width:"18px", height:"18px"}} onClick={addTableRows}/>
+                            <img src={addimage} alt='loading..' style={{width:"18px", height:"18px"}} onClick={addTableRows}/>
                             </th>
                       </tr>
                     </thead>

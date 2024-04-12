@@ -5,8 +5,7 @@ import axios from "axios";
 import * as ReactBootStrap from 'react-bootstrap';
 import paginationFactory, { PaginationProvider, PaginationTotalStandalone, PaginationListStandalone } from 'react-bootstrap-table2-paginator';
 import Multiselect from 'multiselect-react-dropdown';
-import { MapContainer, TileLayer,FeatureGroup} from 'react-leaflet';
-import { EditControl } from "react-leaflet-draw";
+import { MapContainer} from 'react-leaflet';
 import {Button,Modal} from "react-bootstrap";
 import JSONPretty from 'react-json-pretty';
 import { MdOutlinePageview } from "react-icons/md";
@@ -19,6 +18,8 @@ import AuthService from "../services/auth.service";
 import {mayFlyer} from './helper';
 import 'leaflet-providers';
 import "leaflet-bing-layer";
+import Tab from 'react-bootstrap/Tab';
+import Tabs from 'react-bootstrap/Tabs';
 
 const Home = () => {
 
@@ -30,6 +31,7 @@ const Home = () => {
   const [unauthorized, setUnauthorized] = useState(false);
   const [infoshow, setinfoshow] = useState(false);
   const [infotext, setinfotext] = useState(false);
+  const [table, setTable] = useState({});
   const [metadata, setMetadata] = useState('');
   const [infoshow2, setinfoshow2] = useState(false);
   const [infoshow22, setinfoshow22] = useState(false);
@@ -73,29 +75,6 @@ const Home = () => {
   const [checked, setChecked] = React.useState(false);
   const [token, setToken] = React.useState(null);
 
-  function hasDuplicates(array) {
-    return new Set(array).size !== array.length;
-  }
-
-  function countEachDuplicate(array) {
-    const counts = {};
-    const duplicates = {};
-  
-    array.forEach(item => {
-      counts[item] = (counts[item] || 0) + 1;
-    });
-  
-    for (const [item, count] of Object.entries(counts)) {
-      if (count > 1) {
-        // Subtract 1 so we count duplicates only, not the original
-        duplicates[item] = count - 1;
-      }
-    }
-  
-    return duplicates;
-  }
-  
-
   const handleinfo = () => {
     setinfoshow(false)
   };
@@ -132,38 +111,12 @@ const Home = () => {
   
           
   };
-
-  const _onEdited = e => {
-    let numEdited = 0;
-    e.layers.eachLayer(layer => {
-      numEdited += 1;
-    });
-
-  };
-
- const _onCreated = e => {
-    let new_features_layer = e.layer;
-    var extent_def = new_features_layer._bounds._northEast.lat+","+new_features_layer._bounds._southWest.lat+","+new_features_layer._bounds._northEast.lng+","+new_features_layer._bounds._southWest.lng;
-    var minx = new_features_layer._bounds._southWest.lng;
-    var maxx = new_features_layer._bounds._northEast.lng;
-    var miny = new_features_layer._bounds._southWest.lat;
-    var maxy = new_features_layer._bounds._northEast.lat;
-  setExtent(extent_def);
-  extentref.current = "minx="+minx+" maxx="+maxx+" miny="+miny+" maxy="+maxy;
-  };
-
-  const _onDeleted = e => {
-    let numDeleted = 0;
-    e.layers.eachLayer(layer => {
-      numDeleted += 1;
-    });
-
-  };
   
   const handleClick = (e) => {
       setChecked(!checked)
       e.currentTarget.blur();
     }
+
   const getPlayerData = async (e) => {
       try{
         if (markersLayer.current != null){
@@ -178,7 +131,7 @@ const Home = () => {
           
         });
         if (checked){
-          if (datatyperef.current == "%"){
+          if (datatyperef.current === "%"){
             setCss('btn btn-warning')
             setHeader('Warning')
             setMessage("Data Type is a Required Field.")
@@ -225,7 +178,7 @@ const Home = () => {
         }
         }
         else{
-          if (countryref.current == "%" || datatyperef.current == "%"){
+          if (countryref.current === "%" || datatyperef.current === "%"){
             setCss('btn btn-warning')
             setHeader('Warning')
             setMessage("Country and Data Type are Required Fields.")
@@ -258,14 +211,15 @@ const Home = () => {
         
         }
         console.log(params)
-        */var marker, test;
+        */
+       var marker;
           const data2 = await axios.post("https://opmdata.gem.spc.int/api/metadata/findByMultipleParam", params);
           let counter = 1;
           var polygon = [];
           for (var b=0; b<data2.data.length; b++){
               let temp = [];
               var country = data2.data[b].countries[0].country_name;
-              var desc = data2.data[b].title;
+              var desc2 = data2.data[b].title;
               var title = data2.data[b].description;
               var datatype = data2.data[b].data_type.datatype_code;
               var project = data2.data[b].project.project_code;
@@ -280,12 +234,12 @@ const Home = () => {
               if (dtatype === 6){
                 coord_marker.push(loopToGetCoord(extents,"ymin"))
                 coord_marker.push(loopToGetCoord(extents,"xmin"))
-              var test = data2.data[b].id;
+              var test3 = data2.data[b].id;
               
-              marker = L.marker(coord_marker,{icon:redIcon,id:8}).addTo(markersLayer.current).bindPopup(desc,{
+              marker = L.marker(coord_marker,{icon:redIcon,id:8}).addTo(markersLayer.current).bindPopup("<div style='width: 150px;text-align: center;'>"+ desc2+"</div>",{
                 maxWidth: "auto"
             })
-              marker.test = test;
+              marker.test = test3;
               marker.type = datatype;
               //layer2.current = L.marker(coord_marker,{icon:redIcon,id:idxx}).on('click', function(e) {console.log(e)});
               //layer2.current.addTo(mapContainermain.current);
@@ -299,11 +253,11 @@ const Home = () => {
                 tmp.push(loopToGetCoord(extents,"ymax"))
                 tmp.push(loopToGetCoord(extents,"xmax"))
                 coordbbox.push(tmp)
-                var test = data2.data[b].id;
-                marker = L.rectangle(coordbbox, {id:8,color: '#FF5733', weight: 3}).addTo(markersLayer.current).bindPopup(desc,{
+                var test2 = data2.data[b].id;
+                marker = L.rectangle(coordbbox, {id:8,color: '#FF5733', weight: 3}).addTo(markersLayer.current).bindPopup("<div style='width: 150px; text-align: center;'>"+ desc2+"</div>",{
                   maxWidth: "auto"
               })
-                marker.test = test;
+                marker.test = test2;
                 marker.type = datatype;
               }
               
@@ -311,7 +265,7 @@ const Home = () => {
               temp.push({
                   "id":counter,
                   "idx":data2.data[b].id,
-                  "desc":desc,
+                  "desc":desc2,
                   "title":title,
                   "datatype":datatype,
                   "country":country.toString(),
@@ -547,6 +501,66 @@ const Home = () => {
       //map.flyTo([-8.541147, 179.196198], 12);
     }
     const jsonData = JSON.stringify(data2.data[0], null, 2);
+    var parameters = [];
+    var extentsarr = [];
+    var flags = [];
+    var tags = [];
+    var topics = [];
+    var sourceurl = [];
+
+    var metadata = {};
+    metadata.title = data2.data[0].title;
+    metadata.description = data2.data[0].description;
+    metadata.temporal_coverage_from = data2.data[0].temporal_coverage_from;
+    metadata.temporal_coverage_to = data2.data[0].temporal_coverage_to;
+    metadata.language = data2.data[0].language;
+    metadata.version = data2.data[0].version;
+    metadata.is_restricted = String(data2.data[0].is_restricted);
+    metadata.is_checked = String(data2.data[0].is_checked);
+    metadata.createdAt = data2.data[0].createdAt;
+    metadata.data_type = data2.data[0].data_type.datatype_code;
+    metadata.country = data2.data[0].countries[0].country_name;
+    metadata.spatial_projection = data2.data[0].spatial_projection.name;
+    metadata.project = data2.data[0].project.project_name;
+    metadata.organization = data2.data[0].organization.name;
+    metadata.contact = data2.data[0].contact.email;
+    metadata.license = data2.data[0].license.name;
+    
+    for (var h =0; h<data2.data[0].flags.length; h++){
+      flags.push(data2.data[0].flags[h].name)
+    }
+    metadata.flags = flags.join(', ') === "" ? "NAN" : flags.join(', ');
+
+    for (var i =0; i<data2.data[0].topics.length; i++){
+      topics.push(data2.data[0].topics[i].name)
+    }
+    metadata.topics = topics.join(', ') === "" ? "NAN" : topics.join(', ');
+
+    for (var j =0; j<data2.data[0].tags.length; j++){
+      tags.push(data2.data[0].tags[j].name)
+    }
+    metadata.tags = tags.join(', ') === "" ? "NAN" : tags.join(', ');
+
+    for (var k =0; k<data2.data[0].sourceurls.length; k++){
+      sourceurl.push(data2.data[0].sourceurls[k].value)
+    }
+    metadata.sourceurl = sourceurl.join(', ') === "" ? "NAN" : sourceurl.join(', ');
+
+    for (var l =0; l<data2.data[0].spatial_extents.length; l++){
+      extentsarr.push(data2.data[0].spatial_extents[l].extent_name+"="+data2.data[0].spatial_extents[l].value)
+    }
+    metadata.extents = extents.join(', ') === "" ? "NAN" : extentsarr.join(', ');
+
+    for (var m =0; m<data2.data[0].parameters.length; m++){
+      parameters.push(data2.data[0].parameters[m].short_name)
+    }
+    metadata.parameters = parameters.join(', ') === "" ? "NAN" : parameters.join(', ');
+
+    metadata.updatedAt = data2.data[0].updatedAt;
+    metadata.created_by = data2.data[0].created_by.email;
+
+
+    setTable(metadata)
     setinfotext(jsonData)
     setLoading(true)
     setinfoshow(true)
@@ -681,7 +695,8 @@ const options = {
   custom: true,
   totalSize: obsSource.length
 };
-function initialize(){
+
+function initialize_map(){
     
   baseLayermain.current = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; Pacific Community (OSM)',
@@ -737,39 +752,83 @@ mapContainermain.current.on(L.Draw.Event.CREATED, function(e) {
   
 
 });
-
-
 markersLayer.current = L.featureGroup().addTo(mapContainermain.current).on("click", groupClick);
   }
+  function findDuplicateArrayIndices(arrays) {
+    const indexMap = new Map();
+
+    arrays.forEach((array, index) => {
+        const key = JSON.stringify(array);
+        if (!indexMap.has(key)) {
+            indexMap.set(key, []);
+        }
+        indexMap.get(key).push(index);
+    });
+
+    const duplicateIndices = [];
+    indexMap.forEach((indices) => {
+        if (indices.length > 1) {
+            duplicateIndices.push(indices);
+        }
+    });
+
+    return duplicateIndices;
+}
+
+function* flattenArray(arr) {
+  for (let item of arr) {
+      if (Array.isArray(item)) {
+          yield* flattenArray(item);
+      } else {
+          yield item;
+      }
+  }
+}
+
+
   function groupClick(event) {
    // console.log(markersLayer.current._layers['57']._bounds);
     //console.log(markersLayer.current._layers['60']._bounds);
     if (datatyperef.current !== 'insitu'){
     var obj = markersLayer.current._layers;
     var result = Object.keys(obj).map((key) => [key, obj[key]]);
-    var xmin_arr = [];
-    var ymin_arr =[];
-    var xmax_arr =[];
-    var ymax_arr = [];
+    console.log(result);
+    var all_bounds = [];
+    var ids = [];
     for (var a=0; a<result.length; a++){
-      xmin_arr.push(result[a][1]._bounds._southWest.lat)
-      ymin_arr.push(result[a][1]._bounds._southWest.lng)
-      xmax_arr.push(result[a][1]._bounds._northEast.lat)
-      ymax_arr.push(result[a][1]._bounds._northEast.lng)
+      var temp = [];
+      var ind =[];
+      ind.push(result[a][1].test)
+      ind.push(a)
+      ids.push(ind)
+      temp.push(result[a][1]._bounds._southWest.lat)
+      temp.push(result[a][1]._bounds._southWest.lng)
+      temp.push(result[a][1]._bounds._northEast.lat)
+      temp.push(result[a][1]._bounds._northEast.lng)
+      all_bounds.push(temp)
     }
-    console.log(xmin_arr, ymin_arr, xmax_arr, ymax_arr)
-    var xmin_bool= hasDuplicates(xmin_arr);
-    var ymin_bool= hasDuplicates(xmax_arr);
-    var xmax_bool= hasDuplicates(ymin_arr);
-    var ymax_bool= hasDuplicates(ymax_arr);
-    var check_boll_arr = [];
-    check_boll_arr.push(hasDuplicates(xmin_arr))
-    check_boll_arr.push(hasDuplicates(xmax_arr))
-    check_boll_arr.push(hasDuplicates(ymin_arr))
-    check_boll_arr.push(hasDuplicates(ymin_arr))
-    var counter = countEachDuplicate(check_boll_arr)
-    console.log(result)
-    if (parseInt(counter.true) >= 3){
+    var commons = findDuplicateArrayIndices(all_bounds); 
+    const flatArray = Array.from(flattenArray(commons));
+    console.log(flatArray);
+    console.log(ids)
+    var valid = false;
+    for (var b=0; b<ids.length; b++){
+      var org_ind = ids[b][1];
+      var vool = false
+      for (var c=0; c<flatArray.length; c++){
+        if (org_ind === flatArray[c]){
+          vool = true
+        }
+      }
+      if(!vool){
+        if (ids[b][0] === event.layer.test){
+          valid = true
+        }
+      }
+    }
+    
+
+    if (!valid){
       setCss('btn btn-warning')
       setHeader('Warning')
       setMessage("Some layers maybe intersecting, please use the table below to view metadata.")
@@ -888,7 +947,7 @@ mapContainer.current.on(L.Draw.Event.CREATED, function(e) {
   useEffect(() => {  
 
       if (_isMounted.current){
-        initialize();
+        initialize_map();
         const user = AuthService.getCurrentUserCookie();
         if (user === null || user === undefined){
           setUnauthorized(true);
@@ -907,6 +966,7 @@ mapContainer.current.on(L.Draw.Event.CREATED, function(e) {
       }  
       return () => { _isMounted.current = false }; 
       },[]);
+
     return (
         <div className="container-fluid">
             <main id="bodyWrapper">
@@ -1106,7 +1166,7 @@ mapContainer.current.on(L.Draw.Event.CREATED, function(e) {
         </div>
       <br/>
  </div>
- <div className="col-sm-6" id="map"  style={{padding:'0', marginRight:'0%'}}>
+ <div className="col-sm-6" id="map"  style={{paddingLeft:'0'}}>
  <div id="mapidmain" style={{ height: '100%', width: '100%' }}></div>
 
   </div>
@@ -1151,9 +1211,9 @@ mapContainer.current.on(L.Draw.Event.CREATED, function(e) {
 <br/>
           </div>
       </main>
-      <Modal show={infoshow} onHide={handleinfo} size="lg">
+      <Modal show={infoshow} onHide={handleinfo} size="xl">
     <Modal.Header>
-      Information
+      Metadata 
       </Modal.Header>
       
         <Modal.Body>
@@ -1162,7 +1222,129 @@ mapContainer.current.on(L.Draw.Event.CREATED, function(e) {
               <img className="edit-location-button" alt='flag' src={countryFlagRef.current} style={{width:"100px", height:"60px"}} />
             </div>
 <br/>
-        <JSONPretty  id="json-pretty" data={infotext} theme={JSONPrettyMon} mainStyle="padding:-10em; height:300px;" valueStyle="font-size:1em"></JSONPretty>
+<Tabs
+      defaultActiveKey="home"
+      id="controlled-tab-example"
+      className="mb-3"
+      tabClassName="color-red"
+    >
+      <Tab eventKey="home" title="Tabular-view">
+        <div class="table-responsive">
+      <table class="table table-bordered table-hover">
+  <thead>
+    <tr>
+      <th scope="col" style={{textAlign:'center', backgroundColor:"#215E95", color:'white',minWidth:'210px'}}>Metadata</th>
+      <th scope="col" style={{textAlign:'center', backgroundColor:"#215E95", color:'white'}}>Value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Title</td>
+      <td>{table.title}</td>
+    </tr>
+    <tr>
+      <td>Description</td>
+      <td>{table.description}</td>
+    </tr>
+    <tr>
+      <td>Temporal Coverage From</td>
+      <td>{table.temporal_coverage_from}</td>
+    </tr>
+    <tr>
+      <td>Temporal Coverage To</td>
+      <td>{table.temporal_coverage_to}</td>
+    </tr>
+    <tr>
+      <td>Language</td>
+      <td>{table.language}</td>
+    </tr>
+    <tr>
+      <td>Version</td>
+      <td>{table.version}</td>
+    </tr>
+    <tr>
+      <td>Restricted</td>
+      <td>{String(table.is_restricted)}</td>
+    </tr>
+    <tr>
+      <td>Data Type</td>
+      <td>{table.data_type}</td>
+    </tr>
+    <tr>
+      <td>Country</td>
+      <td>{table.country}</td>
+    </tr>
+    <tr>
+      <td>Project</td>
+      <td>{table.project}</td>
+    </tr>
+    <tr>
+      <td>Publisher</td>
+      <td>{table.organization}</td>
+    </tr>
+    <tr>
+      <td>Contact</td>
+      <td>{table.contact}</td>
+    </tr>
+    <tr>
+      <td>Flags</td>
+      <td>{table.flags}</td>
+    </tr>
+    <tr>
+      <td>Tags</td>
+      <td>{table.tags}</td>
+    </tr>
+    <tr>
+      <td>Topics</td>
+      <td>{table.topics}</td>
+    </tr>
+    <tr>
+      <td>Parameters</td>
+      <td>{table.parameters}</td>
+    </tr>
+    <tr>
+      <td>Spatial Extents</td>
+      <td>{table.extents}</td>
+    </tr>
+    <tr>
+      <td>Spatial Projection</td>
+      <td>{table.spatial_projection}</td>
+    </tr>
+    <tr>
+      <td>Source url</td>
+      <td>{table.sourceurl}</td>
+    </tr>
+    <tr>
+      <td>Checked</td>
+      <td>{String(table.is_checked)}</td>
+    </tr>
+    <tr>
+      <td>Created at</td>
+      <td>{table.createdAt}</td>
+    </tr>
+    <tr>
+      <td>Updated at</td>
+      <td>{table.updatedAt}</td>
+    </tr>
+    <tr>
+      <td>Created by</td>
+      <td>{table.created_by}</td>
+    </tr>
+    <tr>
+      <td>License</td>
+      <td>{table.license}</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+      </Tab>
+      <Tab eventKey="profile" title="JSON-view">
+      <JSONPretty  id="json-pretty" data={infotext} theme={JSONPrettyMon} mainStyle="padding:-10em" valueStyle="font-size:1em"></JSONPretty>
+      
+      </Tab>
+    </Tabs>
+
+
         </div>
         </Modal.Body>
         <Modal.Footer>

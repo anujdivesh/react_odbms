@@ -3,7 +3,6 @@ import React, {useEffect, useState} from "react";
 import './css/nav.css';
 import Nav from 'react-bootstrap/Nav';
 import Navbar from 'react-bootstrap/Navbar';
-import NavDropdown from 'react-bootstrap/NavDropdown';
 import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
 import {
@@ -19,7 +18,6 @@ import Login from './pages/login';
 import Signup from './pages/signup';
 import AuthService from "./services/auth.service";
 import EventBus from "./common/EventBus";
-import Cookies from 'js-cookie';
 
 function App() {
 
@@ -61,9 +59,10 @@ function App() {
             <div>
         <Navbar expand="lg" bg={"navbar navbar-expand-sm navbar-custom"} variant={"dark"} style={{paddingRight:"1%",paddingLeft:"1%"}}>
         
+        <img src={require('./assets/images/spx.png')} alt='logo' style={{marginLeft:'-0.9%',marginTop:'-0.7%',marginBottom:'-0.7%', width:"90px", height:"50px"}}/>
         <Navbar.Brand as={Link} to={"/oceandata"}>
           
-          Ocean Data Explorer</Navbar.Brand>
+          &nbsp;&nbsp;Ocean Data Explorer</Navbar.Brand>
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="ms-auto">
@@ -82,8 +81,8 @@ function App() {
          
         ) : (
           <Form inline="true">
-            <Button variant="warning" className="mr-sm-4" as={Link} to={"/oceandata/login"}>Login</Button>&nbsp;
-            <Button variant="warning" className="mr-sm-2" as={Link} to={"/oceandata/signup"} >Sign up!</Button>
+            <Button style={{color:'#215E95'}} variant="warning" className="mr-sm-4" as={Link} to={"/oceandata/login"}>Login</Button>&nbsp;
+            <Button style={{color:'#215E95'}} variant="warning" className="mr-sm-2" as={Link} to={"/oceandata/signup"} >Sign up!</Button>
           </Form>
           )}
         </Navbar.Collapse>

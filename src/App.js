@@ -59,10 +59,10 @@ function App() {
             <div>
         <Navbar expand="lg" bg={"navbar navbar-expand-sm navbar-custom"} variant={"dark"} style={{paddingRight:"1%",paddingLeft:"1%"}}>
         
-        <img src={require('./assets/images/spx.png')} alt='logo' style={{marginLeft:'-0.9%',marginTop:'-0.7%',marginBottom:'-0.7%', width:"90px", height:"50px"}}/>
+        <img src={require('./assets/images/spx.png')} alt='logo' style={{marginLeft:'-0.7%',marginTop:'-0.7%',marginBottom:'-0.7%', width:"90px", height:"50px"}}/>
         <Navbar.Brand as={Link} to={"/oceandata"}>
           
-          &nbsp;&nbsp;Ocean Data Explorer</Navbar.Brand>
+          &nbsp;Ocean Data Explorer</Navbar.Brand>
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="ms-auto">

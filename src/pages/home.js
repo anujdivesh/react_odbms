@@ -31,7 +31,7 @@ const Home = () => {
   const [unauthorized, setUnauthorized] = useState(false);
   const [infoshow, setinfoshow] = useState(false);
   const [infotext, setinfotext] = useState(false);
-  const [table, setTable] = useState({});
+  const [table, setTable] = useState({tags:[], flags:[], topics:[], parameters:[]});
   const [metadata, setMetadata] = useState('');
   const [infoshow2, setinfoshow2] = useState(false);
   const [infoshow22, setinfoshow22] = useState(false);
@@ -131,13 +131,13 @@ const Home = () => {
           
         });
         if (checked){
-          if (datatyperef.current === "%"){
+          /*if (datatyperef.current === "%"){
             setCss('btn btn-warning')
             setHeader('Warning')
             setMessage("Data Type is a Required Field.")
             setinfoshow22(true)
           }
-          else{
+          else{*/
           setLoading(false)
           setobsSource([])
           var myarray = extent.split(',');
@@ -175,7 +175,7 @@ const Home = () => {
           }
 
           setLoading(true)
-        }
+      //  }
         }
         else{
           if (countryref.current === "%" || datatyperef.current === "%"){
@@ -529,17 +529,17 @@ const Home = () => {
     for (var h =0; h<data2.data[0].flags.length; h++){
       flags.push(data2.data[0].flags[h].name)
     }
-    metadata.flags = flags.join(', ') === "" ? "NAN" : flags.join(', ');
+    metadata.flags = flags;
 
     for (var i =0; i<data2.data[0].topics.length; i++){
       topics.push(data2.data[0].topics[i].name)
     }
-    metadata.topics = topics.join(', ') === "" ? "NAN" : topics.join(', ');
+    metadata.topics = topics;
 
     for (var j =0; j<data2.data[0].tags.length; j++){
       tags.push(data2.data[0].tags[j].name)
     }
-    metadata.tags = tags.join(', ') === "" ? "NAN" : tags.join(', ');
+    metadata.tags = tags;
 
     for (var k =0; k<data2.data[0].sourceurls.length; k++){
       sourceurl.push(data2.data[0].sourceurls[k].value)
@@ -554,7 +554,9 @@ const Home = () => {
     for (var m =0; m<data2.data[0].parameters.length; m++){
       parameters.push(data2.data[0].parameters[m].short_name)
     }
-    metadata.parameters = parameters.join(', ') === "" ? "NAN" : parameters.join(', ');
+    
+    if (parameters.length === 0) {parameters.push('NAN') }
+    metadata.parameters = parameters;
 
     metadata.updatedAt = data2.data[0].updatedAt;
     metadata.created_by = data2.data[0].created_by.email;
@@ -969,12 +971,12 @@ mapContainer.current.on(L.Draw.Event.CREATED, function(e) {
 
     return (
         <div className="container-fluid">
-            <main id="bodyWrapper">
-          <div id="mapWrapper" style={{marginLeft:'-0.6%',marginRight:'-0.6%'}}>
+            <main id="bodyWrapper" >
+          <div id="mapWrapper" style={{marginLeft:'-9px',marginRight:'-9px'}}>
 
  <div className="row">
  <div className="col-sm-6" style={{backgroundColor:'#f7f7f7'}} id="map3">
- <div className="row" style={{}}>
+ <div className="row" >
     <div className="col-sm-12">
     <div className="form-group form-select-sm" style={{textAlign:'left'}}>
     <label htmlFor="exampleInputEmail2" >Title</label>
@@ -1268,15 +1270,15 @@ mapContainer.current.on(L.Draw.Event.CREATED, function(e) {
     </tr>
     <tr>
       <td>Data Type</td>
-      <td>{table.data_type}</td>
+      <td> <span class="badge bg-success" style={{fontSize:'14px'}}>{table.data_type}</span></td>
     </tr>
     <tr>
       <td>Country</td>
-      <td>{table.country}</td>
+      <td><img alt='flag' src={countryFlagRef.current} style={{width:"50px", height:"28px"}} /> &nbsp;{table.country} </td>
     </tr>
     <tr>
       <td>Project</td>
-      <td>{table.project}</td>
+      <td>{table.project} </td>
     </tr>
     <tr>
       <td>Publisher</td>
@@ -1288,19 +1290,43 @@ mapContainer.current.on(L.Draw.Event.CREATED, function(e) {
     </tr>
     <tr>
       <td>Flags</td>
-      <td>{table.flags}</td>
+      <td>
+      {table.flags.map(flags => {
+           return (
+          <>  <span class="badge bg-secondary" style={{fontSize:'14px'}}>{flags}</span>&nbsp;</>
+           )
+         })}
+         </td>
     </tr>
     <tr>
       <td>Tags</td>
-      <td>{table.tags}</td>
+      <td>
+      {table.tags.map(tags => {
+           return (
+          <>  <span class="badge bg-primary" style={{fontSize:'14px'}}>#{tags}</span>&nbsp;</>
+           )
+         })}
+         </td>
     </tr>
     <tr>
       <td>Topics</td>
-      <td>{table.topics}</td>
+      <td>
+      {table.topics.map(topics => {
+           return (
+          <>  <span class="badge bg-primary" style={{fontSize:'14px'}}>#{topics}</span>&nbsp;</>
+           )
+         })}
+         </td>
     </tr>
     <tr>
       <td>Parameters</td>
-      <td>{table.parameters}</td>
+      <td>
+      {table.parameters.map(parameters => {
+           return (
+          <>  <span class="badge bg-info text-dark" style={{fontSize:'14px'}}>{parameters}</span>&nbsp;</>
+           )
+         })}
+         </td>
     </tr>
     <tr>
       <td>Spatial Extents</td>
@@ -1308,7 +1334,7 @@ mapContainer.current.on(L.Draw.Event.CREATED, function(e) {
     </tr>
     <tr>
       <td>Spatial Projection</td>
-      <td>{table.spatial_projection}</td>
+      <td> <span class="badge bg-warning text-dark" style={{fontSize:'14px'}}>{table.spatial_projection}</span></td>
     </tr>
     <tr>
       <td>Source url</td>
@@ -1325,10 +1351,6 @@ mapContainer.current.on(L.Draw.Event.CREATED, function(e) {
     <tr>
       <td>Updated at</td>
       <td>{table.updatedAt}</td>
-    </tr>
-    <tr>
-      <td>Created by</td>
-      <td>{table.created_by}</td>
     </tr>
     <tr>
       <td>License</td>

@@ -20,6 +20,10 @@ import 'leaflet-providers';
 import "leaflet-bing-layer";
 import Tab from 'react-bootstrap/Tab';
 import Tabs from 'react-bootstrap/Tabs';
+import {toast} from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
+toast.configure()
 
 const Home = () => {
 
@@ -831,10 +835,11 @@ function* flattenArray(arr) {
     
 
     if (!valid){
-      setCss('btn btn-warning')
-      setHeader('Warning')
-      setMessage("Some layers maybe intersecting, please use the table below to view metadata.")
-      setinfoshow22(true)
+      //setCss('btn btn-warning')
+      //setHeader('Warning')
+      //setMessage("Some layers maybe intersecting, please use the table below to view metadata.")
+      //setinfoshow22(true)
+      toast.warning('Use table to view metadata!', {position: toast.POSITION.BOTTOM_RIGHT, autoClose:4000, width:'400px', pauseOnHover:false, closeOnClick:true})
     }
     else{
       getOneData(event.layer.test)

@@ -15,7 +15,7 @@ import 'leaflet-draw';
 import 'leaflet/dist/leaflet.css'; // Import Leaflet CSS
 import 'leaflet-draw/dist/leaflet.draw.css'; // Import Leaflet Draw CSS
 import AuthService from "../services/auth.service";
-import {mayFlyer} from './helper';
+import {mayFlyer, addEEZ} from './helper';
 import 'leaflet-providers';
 import "leaflet-bing-layer";
 import Tab from 'react-bootstrap/Tab';
@@ -46,6 +46,7 @@ const Home = () => {
   const infotext2Ref = useRef(false);
   const layer = useRef(null);
   const layer2 = useRef(null);
+  const layer3 = useRef(null);
   const mapContainer = useRef(null);
   const baseLayer = useRef();
   const _isMounted = useRef(true);
@@ -737,7 +738,7 @@ function initialize_map(){
 });
 
 mapContainermain.current.addControl(draw_control);
-
+layer3.current = addEEZ(mapContainermain.current)
 mapContainermain.current.on(L.Draw.Event.CREATED, function(e) {
   // Remove all layers (only show one location at a time)
   m_drawn_features.clearLayers();

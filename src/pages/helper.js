@@ -74,7 +74,7 @@ export function mayFlyer(site) {
     export function addEEZ(mapContainer){
         var url = 'https://opmgeoserver.gem.spc.int/geoserver/spc/wms';
         var layer = L.tileLayer.wms(url, {
-          layers: 'spc:globaleez_ffa_spc_line_feb24_v12',
+          layers: 'spc:COSPPac_EEZs',
           transparent: true,
           format: 'image/png'
         }).addTo(mapContainer);

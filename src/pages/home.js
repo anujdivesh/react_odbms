@@ -999,6 +999,7 @@ mapContainer.current.on(L.Draw.Event.CREATED, function(e) {
               value={country}
               onChange={(e) => {
                 countryref.current = e.currentTarget.value;
+                fitbbox(mapContainermain.current, mayFlyer(e.currentTarget.value))
                 setCountry(e.currentTarget.value)
                 e.currentTarget.blur();}}
                 

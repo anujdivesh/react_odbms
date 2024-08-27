@@ -450,7 +450,7 @@ const Home = () => {
   }
 
   function addBBox(map, bbox) {
-  
+   
     var rect = L.rectangle(bbox, {color: '#FF5733', weight: 3}).addTo(map);
     map.fitBounds(bbox);
     return rect;
